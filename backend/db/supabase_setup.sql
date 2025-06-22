@@ -1,8 +1,36 @@
 -- Hiring Evaluations Table for Supabase
 -- This table stores the results of the uAgents hiring system evaluations
 
+-- First, create the resumes table for storing parsed resume data
+CREATE TABLE IF NOT EXISTS resumes (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    candidate_name TEXT NOT NULL,
+    original_filename TEXT,
+    resume_text TEXT NOT NULL,
+    text_length INTEGER,
+    upload_timestamp TIMESTAMP DEFAULT NOW(),
+    
+    -- Parsed resume analysis
+    skills JSONB,
+    experience_years INTEGER,
+    experience_level TEXT,
+    key_achievements JSONB,
+    analysis_summary TEXT,
+    
+    -- Metadata
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Create indexes for the resumes table
+CREATE INDEX IF NOT EXISTS idx_resumes_candidate_name ON resumes(candidate_name);
+CREATE INDEX IF NOT EXISTS idx_resumes_experience_level ON resumes(experience_level);
+CREATE INDEX IF NOT EXISTS idx_resumes_created_at ON resumes(created_at);
+
+-- Now create the hiring evaluations table with reference to resumes
 CREATE TABLE IF NOT EXISTS hiring_evaluations (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    resume_id UUID REFERENCES resumes(id) ON DELETE CASCADE,
     candidate_name TEXT NOT NULL,
     job_title TEXT NOT NULL,
     resume_summary TEXT,
@@ -30,10 +58,17 @@ CREATE INDEX IF NOT EXISTS idx_hiring_evaluations_decision ON hiring_evaluations
 -- Create an index on created_at for time-based queries
 CREATE INDEX IF NOT EXISTS idx_hiring_evaluations_created_at ON hiring_evaluations(created_at);
 
+-- Create an index on resume_id for linking
+CREATE INDEX IF NOT EXISTS idx_hiring_evaluations_resume_id ON hiring_evaluations(resume_id);
+
 -- Enable Row Level Security (RLS)
+ALTER TABLE resumes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE hiring_evaluations ENABLE ROW LEVEL SECURITY;
 
--- Create a policy that allows all operations (you can modify this based on your needs)
+-- Create policies that allow all operations (you can modify this based on your needs)
+CREATE POLICY "Allow all operations on resumes" ON resumes
+    FOR ALL USING (true);
+
 CREATE POLICY "Allow all operations on hiring_evaluations" ON hiring_evaluations
     FOR ALL USING (true);
 
@@ -46,7 +81,12 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
--- Create a trigger to automatically update the updated_at column
+-- Create triggers to automatically update the updated_at column
+CREATE TRIGGER update_resumes_updated_at 
+    BEFORE UPDATE ON resumes 
+    FOR EACH ROW 
+    EXECUTE FUNCTION update_updated_at_column();
+
 CREATE TRIGGER update_hiring_evaluations_updated_at 
     BEFORE UPDATE ON hiring_evaluations 
     FOR EACH ROW 

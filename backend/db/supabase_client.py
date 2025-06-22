@@ -2,7 +2,7 @@
 Supabase Client for Hiring Evaluations
 ======================================
 
-This module provides a client to interact with the hiring_evaluations table in Supabase.
+This module provides a client to interact with the resumes and hiring_evaluations tables in Supabase.
 """
 
 SUPABASE_URL = "https://tceiqtjpxoqeaykptdrj.supabase.co"
@@ -16,7 +16,7 @@ import json
 
 
 class HiringEvaluationsClient:
-    """Client for managing hiring evaluations in Supabase"""
+    """Client for managing resumes and hiring evaluations in Supabase"""
 
     def __init__(self, supabase_url: str = None, supabase_key: str = None):
         """
@@ -36,11 +36,174 @@ class HiringEvaluationsClient:
 
         self.client: Client = create_client(self.supabase_url, self.supabase_key)
 
+    # ===== RESUME METHODS =====
+    
+    async def create_resume(
+        self,
+        candidate_name: str,
+        resume_text: str,
+        original_filename: Optional[str] = None,
+        skills: Optional[List[str]] = None,
+        experience_years: Optional[int] = None,
+        experience_level: Optional[str] = None,
+        key_achievements: Optional[List[str]] = None,
+        analysis_summary: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """
+        Create a new resume record
+
+        Args:
+            candidate_name: Name of the candidate
+            resume_text: Full text content of the resume
+            original_filename: Original filename of the uploaded file
+            skills: List of technical skills
+            experience_years: Years of experience
+            experience_level: Experience level (Junior, Mid-level, Senior)
+            key_achievements: List of key achievements
+            analysis_summary: Summary of the resume analysis
+
+        Returns:
+            Dictionary containing the created resume record
+        """
+        data = {
+            "candidate_name": candidate_name,
+            "resume_text": resume_text,
+            "text_length": len(resume_text),
+            "original_filename": original_filename,
+            "skills": json.dumps(skills) if skills else None,
+            "experience_years": experience_years,
+            "experience_level": experience_level,
+            "key_achievements": json.dumps(key_achievements) if key_achievements else None,
+            "analysis_summary": analysis_summary,
+        }
+
+        # Remove None values
+        data = {k: v for k, v in data.items() if v is not None}
+
+        response = self.client.table("resumes").insert(data).execute()
+
+        if response.data:
+            return response.data[0]
+        else:
+            raise Exception("Failed to create resume record")
+
+    async def get_resume(self, resume_id: str) -> Optional[Dict[str, Any]]:
+        """
+        Get a resume by ID
+
+        Args:
+            resume_id: UUID of the resume
+
+        Returns:
+            Dictionary containing the resume record or None if not found
+        """
+        response = (
+            self.client.table("resumes")
+            .select("*")
+            .eq("id", resume_id)
+            .execute()
+        )
+
+        if response.data:
+            return response.data[0]
+        return None
+
+    async def get_resumes_by_candidate(
+        self, candidate_name: str
+    ) -> List[Dict[str, Any]]:
+        """
+        Get all resumes for a specific candidate
+
+        Args:
+            candidate_name: Name of the candidate
+
+        Returns:
+            List of resume records
+        """
+        response = (
+            self.client.table("resumes")
+            .select("*")
+            .eq("candidate_name", candidate_name)
+            .execute()
+        )
+        return response.data or []
+
+    async def search_resumes(
+        self, 
+        skills: Optional[List[str]] = None,
+        experience_level: Optional[str] = None,
+        min_years: Optional[int] = None,
+        limit: int = 50
+    ) -> List[Dict[str, Any]]:
+        """
+        Search resumes by criteria
+
+        Args:
+            skills: List of required skills
+            experience_level: Required experience level
+            min_years: Minimum years of experience
+            limit: Maximum number of results
+
+        Returns:
+            List of matching resume records
+        """
+        query = self.client.table("resumes").select("*")
+        
+        if experience_level:
+            query = query.eq("experience_level", experience_level)
+        
+        if min_years:
+            query = query.gte("experience_years", min_years)
+        
+        # For skills, we'll need to use a more complex query
+        # This is a simplified version - in production you might want full-text search
+        
+        response = query.limit(limit).execute()
+        results = response.data or []
+        
+        # Filter by skills in Python (could be optimized with proper database queries)
+        if skills:
+            filtered_results = []
+            for resume in results:
+                resume_skills = json.loads(resume.get("skills", "[]")) if resume.get("skills") else []
+                resume_skills_lower = [skill.lower() for skill in resume_skills]
+                required_skills_lower = [skill.lower() for skill in skills]
+                
+                if any(req_skill in resume_skills_lower for req_skill in required_skills_lower):
+                    filtered_results.append(resume)
+            
+            results = filtered_results
+        
+        return results
+
+    async def get_recent_resumes(self, limit: int = 10) -> List[Dict[str, Any]]:
+        """
+        Get the most recently uploaded resumes
+
+        Args:
+            limit: Maximum number of records to return
+
+        Returns:
+            List of recent resume records
+        """
+        response = (
+            self.client.table("resumes")
+            .select("*")
+            .order("created_at", desc=True)
+            .limit(limit)
+            .execute()
+        )
+        return response.data or []
+
+    # ===== HIRING EVALUATION METHODS =====
+
     async def create_evaluation(
         self,
+        resume_id: Optional[str],
         candidate_name: str,
         job_title: str,
         resume_summary: Optional[str] = None,
+        resume_text: Optional[str] = None,
         job_summary: Optional[str] = None,
         intersection_score: Optional[float] = None,
         intersection_notes: Optional[str] = None,
@@ -54,9 +217,11 @@ class HiringEvaluationsClient:
         Create a new hiring evaluation record
 
         Args:
+            resume_id: UUID of the resume being evaluated (optional for partial records)
             candidate_name: Name of the candidate
             job_title: Title of the job position
             resume_summary: Summary of the resume analysis
+            resume_text: Full text content of the resume
             job_summary: Summary of the job requirements analysis
             intersection_score: Compatibility score (0.0 to 1.0)
             intersection_notes: Notes about the intersection analysis
@@ -70,9 +235,11 @@ class HiringEvaluationsClient:
             Dictionary containing the created record
         """
         data = {
+            "resume_id": resume_id,
             "candidate_name": candidate_name,
             "job_title": job_title,
             "resume_summary": resume_summary,
+            "resume_text": resume_text,
             "job_summary": job_summary,
             "intersection_score": intersection_score,
             "intersection_notes": intersection_notes,
@@ -298,6 +465,7 @@ if __name__ == "__main__":
 
         # Create a test evaluation
         evaluation = await client.create_evaluation(
+            resume_id="some-resume-id",
             candidate_name="John Doe",
             job_title="Software Engineer",
             resume_summary="Experienced developer with Python and JavaScript skills",
