@@ -12,9 +12,10 @@ import { X, Plus } from "lucide-react"
 interface CreateJobFormProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  onJobCreated?: () => void
 }
 
-export function CreateJobForm({ open, onOpenChange }: CreateJobFormProps) {
+export function CreateJobForm({ open, onOpenChange, onJobCreated }: CreateJobFormProps) {
   const [formData, setFormData] = useState({
     title: "",
     summary: "",
@@ -51,23 +52,46 @@ export function CreateJobForm({ open, onOpenChange }: CreateJobFormProps) {
     }))
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Here you would typically send the data to your backend
-    console.log("Creating job post:", formData)
-    // Reset form and close dialog
-    setFormData({
-      title: "",
-      summary: "",
-      description: "",
-      location: "",
-      type: "Full-time",
-      salary: "",
-      requirements: "",
-      technologies: [],
-      newTechnology: ""
-    })
-    onOpenChange(false)
+    // Prepare payload for backend
+    const payload = {
+      title: formData.title,
+      summary: formData.summary,
+      description: formData.description,
+      location: formData.location,
+      employment_type: formData.type,
+      salary: formData.salary,
+      requirements: formData.requirements,
+      skills: formData.technologies,
+      status: "ACTIVE"
+    }
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/job-postings`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      })
+      if (!res.ok) throw new Error("Failed to create job posting")
+      // Optionally, you can get the created job: const job = await res.json()
+      if (onJobCreated) onJobCreated()
+      // Reset form and close dialog
+      setFormData({
+        title: "",
+        summary: "",
+        description: "",
+        location: "",
+        type: "Full-time",
+        salary: "",
+        requirements: "",
+        technologies: [],
+        newTechnology: ""
+      })
+      onOpenChange(false)
+    } catch (err) {
+      alert("Error creating job posting")
+      // Optionally handle error
+    }
   }
 
   return (
