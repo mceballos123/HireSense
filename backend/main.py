@@ -15,6 +15,7 @@ from hiring_agents import (
     DecisionAgent,
     HiringCoordinator,
 )
+from db.supabase_client import HiringEvaluationsClient
 
 
 async def run_hiring_system(
@@ -75,6 +76,42 @@ async def run_hiring_system(
     coordinator_task.cancel()
 
     print("\n✅ Hiring evaluation completed!")
+
+    # Save evaluation to Supabase
+    supabase_client = HiringEvaluationsClient()
+    # Wait for the coordinator to have all the data
+    await supabase_client.create_evaluation(
+        candidate_name=coordinator.candidate_name,
+        job_title=coordinator.job_title,
+        resume_summary=(
+            coordinator.resume_analysis.analysis
+            if coordinator.resume_analysis
+            else None
+        ),
+        job_summary=(
+            coordinator.job_analysis.analysis if coordinator.job_analysis else None
+        ),
+        intersection_score=(
+            coordinator.intersection_analysis.overall_compatibility
+            if coordinator.intersection_analysis
+            else None
+        ),
+        intersection_notes=(
+            coordinator.intersection_analysis.analysis
+            if coordinator.intersection_analysis
+            else None
+        ),
+        pro_arguments=[arg.model_dump() for arg in coordinator.pro_arguments],
+        anti_arguments=[arg.model_dump() for arg in coordinator.anti_arguments],
+        final_decision=(
+            coordinator.decision_complete and "HIRE"
+            if getattr(coordinator, "final_decision", "HIRE") == "HIRE"
+            else "REJECT"
+        ),
+        decision_confidence=getattr(coordinator, "decision_confidence", None),
+        decision_reasoning=getattr(coordinator, "decision_reasoning", None),
+    )
+    print("✅ Evaluation saved to Supabase!")
 
 
 # Test data and main execution
