@@ -7,7 +7,7 @@ This agent makes the final hiring decision based on the debate between pro and a
 
 from uagents import Agent, Context, Protocol
 from uagents.setup import fund_agent_if_low
-from .models import DecisionRequest, DecisionResponse
+from .models import DecisionRequest, DecisionResponse, Reasoning
 from .llm_client import SimpleLLMAgent
 
 
@@ -38,7 +38,7 @@ class DecisionAgent(Agent):
             )
 
             prompt = f"""
-            You are the final decision maker for a hiring decision. Evaluate all the arguments and make a final decision.
+            You are the final decision maker for a hiring decision. Evaluate all the arguments and make a final, well-reasoned decision. Your reasoning should be comprehensive.
             
             Intersection Analysis:
             {msg.intersection_analysis.analysis}
@@ -50,19 +50,18 @@ class DecisionAgent(Agent):
             Anti-Hire Arguments:
             {anti_args}
             
-            Evaluate the strength of each side's arguments and make a final decision.
-            Consider:
-            1. Which side made stronger arguments
-            2. The overall compatibility score
-            3. The confidence levels of each argument
-            4. The key factors that matter most for this role
+            Evaluate the strength of each side's arguments and make a final, well-reasoned decision. Your reasoning should be comprehensive.
             
-            Respond with ONLY a JSON object in this exact format:
+            Respond with ONLY a JSON object in this exact format. The reasoning MUST be broken down into a detailed summary, and comprehensive lists of pros and cons.
             {{
                 "decision": "<hire/no_hire>",
                 "confidence": <0.0 to 1.0>,
-                "reasoning": "<detailed explanation of your decision>",
-                "key_factors": ["factor1", "factor2", "factor3"]
+                "reasoning": {{
+                    "summary": "<A detailed, 2-3 sentence summary explaining the final verdict and its context.>",
+                    "pros": ["<A comprehensive list of all key strengths and pro-hire arguments. Include at least 2-3 points.>", "<...more pros>"],
+                    "cons": ["<A comprehensive list of all key weaknesses and anti-hire arguments. Include at least 2-3 points.>", "<...more cons>"]
+                }},
+                "key_factors": ["<The most important factors that drove the decision.>", "<...more factors>"]
             }}
             """
 
@@ -73,22 +72,28 @@ class DecisionAgent(Agent):
                     analysis = self.llm_agent.parse_json_response(result["content"])
 
                     if analysis:
+                        reasoning_data = analysis.get("reasoning", {})
                         response = DecisionResponse(
-                            decision=analysis.get("decision", "hire"),
+                            decision=analysis.get("decision", "no_hire"),
                             confidence=analysis.get("confidence", 0.7),
-                            reasoning=analysis.get(
-                                "reasoning", "Default decision based on compatibility"
+                            reasoning=Reasoning(
+                                summary=reasoning_data.get("summary", "Analysis incomplete."),
+                                pros=reasoning_data.get("pros", []),
+                                cons=reasoning_data.get("cons", [])
                             ),
-                            key_factors=analysis.get(
-                                "key_factors", ["Skills match", "Experience level"]
-                            ),
+                            key_factors=analysis.get("key_factors", ["N/A"]),
                         )
                     else:
+                        # Default response if parsing fails
                         response = DecisionResponse(
-                            decision="hire",
-                            confidence=0.7,
-                            reasoning="Default decision based on compatibility",
-                            key_factors=["Skills match", "Experience level"],
+                            decision="no_hire",
+                            confidence=0.0,
+                            reasoning=Reasoning(
+                                summary="Failed to parse LLM response.",
+                                pros=[],
+                                cons=["Could not generate analysis from AI."],
+                            ),
+                            key_factors=["Parsing Error"],
                         )
 
                     print(f"🎯 {self.name}: Decision made")
@@ -97,18 +102,27 @@ class DecisionAgent(Agent):
                 except Exception as e:
                     print(f"❌ {self.name}: Error processing response: {e}")
                     response = DecisionResponse(
-                        decision="hire",
-                        confidence=0.7,
-                        reasoning="Error processing response, using defaults",
-                        key_factors=["Skills match", "Experience level"],
+                        decision="no_hire",
+                        confidence=0.0,
+                        reasoning=Reasoning(
+                            summary="An exception occurred while processing the response.",
+                            pros=[],
+                            cons=[str(e)],
+                        ),
+                        key_factors=["Processing Error"],
                     )
                     await ctx.send(sender, response)
             else:
+                # Default response if API call fails
                 response = DecisionResponse(
-                    decision="hire",
-                    confidence=0.7,
-                    reasoning="API Error, using defaults",
-                    key_factors=["Skills match", "Experience level"],
+                    decision="no_hire",
+                    confidence=0.0,
+                    reasoning=Reasoning(
+                        summary="API Error.",
+                        pros=[],
+                        cons=[f"API Error: {result['content']}"],
+                    ),
+                    key_factors=["API Error"],
                 )
                 await ctx.send(sender, response)
 

@@ -28,6 +28,8 @@ export function CreateJobForm({ open, onOpenChange, onJobCreated }: CreateJobFor
     newTechnology: ""
   })
 
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
       ...prev,
@@ -54,27 +56,37 @@ export function CreateJobForm({ open, onOpenChange, onJobCreated }: CreateJobFor
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Prepare payload for backend
-    const payload = {
-      title: formData.title,
-      summary: formData.summary,
-      description: formData.description,
-      location: formData.location,
-      employment_type: formData.type,
-      salary: formData.salary,
-      requirements: formData.requirements,
-      skills: formData.technologies,
-      status: "ACTIVE"
-    }
+    setIsSubmitting(true)
+    
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/job-postings`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const payload = {
+        title: formData.title,
+        summary: formData.summary,
+        description: formData.description,
+        location: formData.location,
+        employment_type: formData.type,
+        salary: formData.salary,
+        requirements: formData.requirements,
+        skills: formData.technologies,
+        status: "ACTIVE",
+        applicants_count: 0
+      }
+
+      const response = await fetch('http://localhost:8000/job-postings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify(payload)
       })
-      if (!res.ok) throw new Error("Failed to create job posting")
-      // Optionally, you can get the created job: const job = await res.json()
-      if (onJobCreated) onJobCreated()
+
+      if (!response.ok) {
+        throw new Error(`Failed to create job posting: ${response.statusText}`)
+      }
+
+      const result = await response.json()
+      console.log("Job posting created successfully:", result)
+      
       // Reset form and close dialog
       setFormData({
         title: "",
@@ -88,9 +100,17 @@ export function CreateJobForm({ open, onOpenChange, onJobCreated }: CreateJobFor
         newTechnology: ""
       })
       onOpenChange(false)
-    } catch (err) {
-      alert("Error creating job posting")
-      // Optionally handle error
+      
+      // Call the callback to refresh the job list
+      if (onJobCreated) {
+        onJobCreated()
+      }
+      
+    } catch (error) {
+      console.error("Error creating job posting:", error)
+      alert("Failed to create job posting. Please try again.")
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -233,14 +253,16 @@ export function CreateJobForm({ open, onOpenChange, onJobCreated }: CreateJobFor
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
+              disabled={isSubmitting}
             >
               Cancel
             </Button>
             <Button
               type="submit"
+              disabled={isSubmitting}
               className="bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-700 hover:to-violet-700 text-white border-0 shadow-lg shadow-blue-500/25"
             >
-              Create Job Post
+              {isSubmitting ? "Creating..." : "Create Job Post"}
             </Button>
           </DialogFooter>
         </form>

@@ -16,7 +16,8 @@ from hiring_agents import (
 from hiring_agents.models import (
     JobParseRequest, ResumeParseRequest, IntersectionRequest,
     DebateRequest, DecisionRequest, JobParseResponse, ResumeParseResponse,
-    IntersectionResponse, DebateResponse, DecisionResponse
+    IntersectionResponse, DebateResponse, DecisionResponse, FinalResult,
+    TranscriptEntry
 )
 
 # Main Coordinator
@@ -39,6 +40,7 @@ class HiringCoordinator(Agent):
         self.intersection_analysis = None
         self.pro_arguments = []
         self.anti_arguments = []
+        self.final_decision = None
         
         # Add completion flags
         self.job_complete = False
@@ -128,6 +130,7 @@ class HiringCoordinator(Agent):
             print(f"Reasoning: {msg.reasoning}")
             print(f"Key Factors: {', '.join(msg.key_factors)}")
             print("="*60)
+            self.final_decision = msg
             self.decision_complete = True
         
         self.include(self.protocol)
@@ -250,7 +253,54 @@ async def run_hiring_system(resume_content: str, job_description: str,
     decision_task.cancel()
     coordinator_task.cancel()
     
-    print("\n✅ Hiring evaluation completed!")
+    print("✅ Hiring process finished.")
+
+    # Construct the full transcript
+    transcript = []
+
+    # 1. Add Intersection Agent's output
+    if coordinator.intersection_analysis:
+        transcript.append(TranscriptEntry(
+            agent_name="Intersection Evaluator",
+            position="evaluation",
+            content=coordinator.intersection_analysis.analysis,
+            details=coordinator.intersection_analysis.dict()
+        ))
+
+    # 2. Add Debate arguments
+    pro_idx, anti_idx = 0, 0
+    num_pro = len(coordinator.pro_arguments)
+    num_anti = len(coordinator.anti_arguments)
+    while pro_idx < num_pro or anti_idx < num_anti:
+        if pro_idx < num_pro:
+            arg = coordinator.pro_arguments[pro_idx]
+            transcript.append(TranscriptEntry(
+                agent_name="Pro-Hire Advocate",
+                position="pro",
+                content=arg.argument,
+                details=arg.dict()
+            ))
+            pro_idx += 1
+        if anti_idx < num_anti:
+            arg = coordinator.anti_arguments[anti_idx]
+            transcript.append(TranscriptEntry(
+                agent_name="Anti-Hire Advocate",
+                position="anti",
+                content=arg.argument,
+                details=arg.dict()
+            ))
+            anti_idx += 1
+    
+    # Construct and return the final comprehensive result
+    if coordinator.final_decision:
+        return FinalResult(
+            resume_analysis=coordinator.resume_analysis,
+            job_analysis=coordinator.job_analysis,
+            intersection_analysis=coordinator.intersection_analysis,
+            decision=coordinator.final_decision,
+            transcript=transcript,
+        )
+    return None
 
 # Test data and main execution
 if __name__ == "__main__":

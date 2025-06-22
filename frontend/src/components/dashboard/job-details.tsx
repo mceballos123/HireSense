@@ -1,11 +1,12 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { notFound } from "next/navigation";
-import { jobPosts, applicants } from "@/lib/script";
+import { jobPosts, detailedCandidates } from "@/lib/script";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -20,22 +21,28 @@ import {
   ChevronRight,
   Zap
 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { motion } from "framer-motion";
 
 type JobDetailsProps = {
   id: string;
 };
 
-// Helper function from dashboard-content
-const getScoreColor = (score: number) => {
-  if (score >= 90) return "text-emerald-600 dark:text-emerald-400";
-  if (score >= 80) return "text-blue-600 dark:text-blue-400";
-  if (score >= 70) return "text-amber-600 dark:text-amber-400";
-  return "text-slate-600 dark:text-slate-400";
-};
-
 export function JobDetails({ id }: JobDetailsProps) {
+  const [isLoading, setIsLoading] = useState(true);
+  const [topCandidates, setTopCandidates] = useState<any[]>([]);
+  
   const job = jobPosts.find((job) => job.id.toString() === id);
-  const sortedApplicants = [...applicants].sort((a, b) => b.score - a.score);
+
+  useEffect(() => {
+    setIsLoading(true);
+    if (job) {
+      // Sort candidates by their pre-calculated overallScore
+      const sortedCandidates = [...detailedCandidates].sort((a, b) => b.overallScore - a.overallScore);
+      setTopCandidates(sortedCandidates);
+    }
+    setIsLoading(false);
+  }, [id, job]);
 
   if (!job) return notFound();
 
@@ -128,46 +135,58 @@ export function JobDetails({ id }: JobDetailsProps) {
             </div>
           </div>
           <div className="space-y-4">
-            {sortedApplicants.map((applicant) => (
-              <Card key={applicant.id} className="group relative overflow-hidden border border-slate-200/60 bg-white/90 backdrop-blur-sm shadow-sm hover:shadow-lg hover:border-blue-300/60 transition-all duration-300 hover:-translate-y-0.5 dark:bg-slate-800/90 dark:border-slate-700/60 dark:hover:border-blue-600/60">
-                <div className="absolute top-4 right-4">
-                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-blue-50 to-violet-50 border border-blue-200/50 dark:from-blue-950/50 dark:to-violet-950/50 dark:border-blue-800/30">
-                    <Zap className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
-                    <span className={`text-sm font-bold ${getScoreColor(applicant.score)}`}>
-                      {applicant.score}
-                    </span>
+            {isLoading ? (
+              Array.from({ length: 4 }).map((_, index) => (
+                <Card key={index} className="p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Skeleton className="h-5 w-32" />
+                    <Skeleton className="h-5 w-10" />
                   </div>
-                </div>
-                <CardContent className="p-6 pr-20">
-                  <div className="space-y-3">
-                    <div>
-                      <h3 className="text-lg font-bold text-slate-900 dark:text-white">
-                        {applicant.name}
-                      </h3>
-                      <p className="text-base text-slate-600 dark:text-slate-400 font-medium">{applicant.position}</p>
-                    </div>
-                    <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
-                      <div className="flex items-center gap-1.5">
-                        <MapPin className="h-3.5 w-3.5" />
-                        <span>{applicant.location}</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <Clock className="h-3.5 w-3.5" />
-                        <span>{applicant.experience}</span>
-                      </div>
-                    </div>
-                    <div className="transition-all duration-300 max-h-0 group-hover:max-h-12 group-hover:pt-2 overflow-hidden">
-                      <Link href={`/applicant/${applicant.id}`}>
-                        <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 gap-2">
-                          <span>View Profile</span>
-                          <ChevronRight className="h-4 w-4" />
-                        </Button>
-                      </Link>
-                    </div>
+                  <Skeleton className="h-4 w-48" />
+                  <div className="flex items-center gap-4 pt-1">
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-4 w-20" />
                   </div>
-                </CardContent>
-              </Card>
-            ))}
+                </Card>
+              ))
+            ) : (
+              topCandidates.map((candidate, index) => (
+                <motion.div
+                  key={candidate.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                >
+                  <Link href={`/applicant/${candidate.id}`} className="block">
+                    <Card className="p-4 group hover:bg-slate-100/50 dark:hover:bg-slate-800/50 transition-colors duration-300">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h3 className="font-bold text-slate-800 dark:text-slate-100 group-hover:text-blue-600 dark:group-hover:text-blue-400">{candidate.name}</h3>
+                          <p className="text-sm text-slate-500 dark:text-slate-400">{candidate.position}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge className="bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-900/50 dark:text-blue-300 dark:border-blue-700 font-bold">
+                            {candidate.overallScore}
+                          </Badge>
+                          <ChevronRight className="h-5 w-5 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-transform" />
+                        </div>
+                      </div>
+                      <Separator className="my-3" />
+                      <div className="flex items-center gap-4 text-sm text-slate-500 dark:text-slate-400">
+                        <div className="flex items-center gap-1.5">
+                          <MapPin className="h-4 w-4" />
+                          <span>{candidate.location}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <Clock className="h-4 w-4" />
+                          <span>{candidate.experienceYears} years</span>
+                        </div>
+                      </div>
+                    </Card>
+                  </Link>
+                </motion.div>
+              ))
+            )}
           </div>
         </div>
       </div>

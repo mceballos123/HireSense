@@ -351,8 +351,9 @@ export function DashboardContent() {
                         <div className="flex items-center justify-between pt-2">
                           <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
                             <Users className="h-4 w-4" />
-                            <span className="font-semibold text-slate-700 dark:text-slate-300">{job.applicants}</span>
-                            <span>applicants</span>
+                            <Link href={`/job-posts/${job.id}`} className="font-semibold text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400">
+                              {job.applicants} applicants
+                            </Link>
                           </div>
                           
                           <div className="flex items-center gap-1 text-blue-600 group-hover:text-blue-700 transition-colors dark:text-blue-400 dark:group-hover:text-blue-300">
@@ -427,12 +428,16 @@ export function DashboardContent() {
                         <div className="flex items-center gap-4 text-sm text-slate-600 dark:text-slate-400">
                           <div className="flex items-center gap-2">
                             <Users className="h-4 w-4" />
-                            <span className="font-semibold text-slate-700 dark:text-slate-300">{job.applicants} applicants</span>
+                            <Link href={`/job-posts/${job.id}`} className="font-semibold text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400">
+                              {job.applicants} applicants
+                            </Link>
                           </div>
                         </div>
-                        <Button className="bg-blue-600 hover:bg-blue-700 text-white border-0 shadow-lg px-6 py-2 text-sm font-semibold">
-                          View All Applicants
-                        </Button>
+                        <Link href={`/job-posts/${job.id}`}>
+                          <Button className="bg-blue-600 hover:bg-blue-700 text-white border-0 shadow-lg px-6 py-2 text-sm font-semibold">
+                            View All Applicants
+                          </Button>
+                        </Link>
                       </div>
                     </div>
                   </DialogContent>

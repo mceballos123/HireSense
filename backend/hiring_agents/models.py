@@ -5,8 +5,8 @@ Shared Models for uAgents Hiring System
 This file contains all the Pydantic models used across the uAgents system.
 """
 
-from typing import List
-from pydantic import BaseModel
+from typing import List, Optional
+from pydantic import BaseModel, Field
 
 
 # Job-related models
@@ -74,8 +74,32 @@ class DecisionRequest(BaseModel):
     intersection_analysis: IntersectionResponse
 
 
+class Reasoning(BaseModel):
+    """Structured reasoning for the hiring decision."""
+    summary: str
+    pros: List[str]
+    cons: List[str]
+
+
 class DecisionResponse(BaseModel):
     decision: str  # "hire" or "no_hire"
     confidence: float
-    reasoning: str
+    reasoning: Reasoning
     key_factors: List[str]
+
+
+class TranscriptEntry(BaseModel):
+    """A single entry in the full evaluation transcript."""
+    agent_name: str
+    position: str  # 'evaluation', 'pro', 'anti', or 'decision'
+    content: str
+    details: Optional[dict] = None
+
+
+class FinalResult(BaseModel):
+    """The final, comprehensive result of the entire hiring pipeline."""
+    resume_analysis: ResumeParseResponse
+    job_analysis: JobParseResponse
+    intersection_analysis: IntersectionResponse
+    decision: DecisionResponse
+    transcript: List[TranscriptEntry]

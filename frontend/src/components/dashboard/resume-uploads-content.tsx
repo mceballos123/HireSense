@@ -1,250 +1,388 @@
 // components/dashboard/resume-uploads-content.tsx
 "use client"
 
-import { useState } from "react"
+import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Separator } from "@/components/ui/separator"
-import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
-import { Loader2, Upload, FileText, CheckCircle, XCircle } from "lucide-react"
+import { Upload, FileText, CheckCircle, Briefcase, Users, Calendar, MapPin, Award, Target, BrainCircuit, Scale, XCircle } from "lucide-react"
+import { jobPosts } from "@/lib/script"
+import { UploadResumeDialog } from "./upload-resume-dialog"
+import { AnalysisInProgress } from "./analysis-in-progress"
+import { RadialProgress } from "@/components/ui/radial-progress"
 
-interface UploadResult {
+interface ResumeAnalysis {
   candidate_name: string
   skills: string[]
   experience_years: number
   experience_level: string
   key_achievements: string[]
   analysis: string
-  status: string
+}
+
+interface IntersectionAnalysis {
+  analysis: string
+  overall_compatibility: number
+  skill_matches: string[]
+  skill_gaps: string[]
+  experience_match: string
+}
+
+interface Reasoning {
+  summary: string
+  pros: string[]
+  cons: string[]
+}
+
+interface Decision {
+  decision: string
+  confidence: number
+  reasoning: Reasoning
+  key_factors: string[]
+}
+
+interface TranscriptEntry {
+  agent_name: string
+  position: "evaluation" | "pro" | "anti" | "decision"
+  content: string
+  details: any
+}
+
+interface AnalysisResult {
+  resume_analysis: ResumeAnalysis
+  intersection_analysis: IntersectionAnalysis
+  decision: Decision
+  transcript: TranscriptEntry[]
 }
 
 export function ResumeUploadsContent() {
-  const [selectedFile, setSelectedFile] = useState<File | null>(null)
-  const [candidateName, setCandidateName] = useState<string>("")
-  const [isUploading, setIsUploading] = useState<boolean>(false)
-  const [uploadResult, setUploadResult] = useState<UploadResult | null>(null)
-  const [error, setError] = useState<string>("")
+  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null)
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [showTranscript, setShowTranscript] = useState(false)
+  const [selectedJob, setSelectedJob] = useState<any | null>(null)
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const transcriptRef = useRef<HTMLDivElement>(null)
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (file) {
-      // Validate file type
-      const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
-      if (!allowedTypes.includes(file.type)) {
-        setError("Please select a PDF, DOC, or DOCX file")
-        setSelectedFile(null)
-        return
-      }
-      
-      // Validate file size (max 10MB)
-      if (file.size > 10 * 1024 * 1024) {
-        setError("File size must be less than 10MB")
-        setSelectedFile(null)
-        return
-      }
-      
-      setSelectedFile(file)
-      setError("")
-      setUploadResult(null)
+  useEffect(() => {
+    if (showTranscript && transcriptRef.current) {
+      setTimeout(() => {
+        transcriptRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        })
+      }, 100) // Small delay to ensure the element is rendered
     }
+  }, [showTranscript])
+
+  const formatStatus = (status: string) => {
+    if (!status) return ""
+    return status.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())
   }
 
-  const handleUpload = async () => {
-    if (!selectedFile || !candidateName.trim()) {
-      setError("Please select a file and enter candidate name")
-      return
-    }
-
-    setIsUploading(true)
-    setError("")
-    
-    try {
-      const formData = new FormData()
-      formData.append('file', selectedFile)
-      formData.append('candidate_name', candidateName.trim())
-
-      const response = await fetch('http://localhost:8080/upload-resume', {
-        method: 'POST',
-        body: formData,
-      })
-
-      const result = await response.json()
-
-      if (response.ok) {
-        setUploadResult(result as UploadResult)
-        // Clear form on success
-        setSelectedFile(null)
-        setCandidateName("")
-        // Reset file input
-        const fileInput = document.getElementById('resume') as HTMLInputElement
-        if (fileInput) fileInput.value = ''
-      } else {
-        setError(result.error || result.detail || 'Upload failed')
-      }
-    } catch (err) {
-      setError('Network error: Could not connect to server')
-      console.error('Upload error:', err)
-    } finally {
-      setIsUploading(false)
-    }
+  const handleUploadClick = (job: any) => {
+    setAnalysisResult(null)
+    setSelectedJob(job)
+    setIsDialogOpen(true)
   }
 
-  const resetResults = () => {
-    setUploadResult(null)
-    setError("")
+  const handleUploadStart = () => {
+    setIsDialogOpen(false)
+    setIsAnalyzing(true)
+  }
+
+  const handleUploadComplete = (result: AnalysisResult) => {
+    setAnalysisResult(result)
+    setIsAnalyzing(false)
+    setSelectedJob(null)
+  }
+
+  const resetState = () => {
+    setAnalysisResult(null)
+    setIsAnalyzing(false)
+    setShowTranscript(false)
+  }
+
+  if (isAnalyzing) {
+    return <AnalysisInProgress />
   }
 
   return (
-    <div className="flex flex-1 flex-col">
-      <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-        <h1 className="text-lg font-semibold">Resume Uploads</h1>
+    <div className="flex flex-1 flex-col bg-gradient-to-br from-slate-50 via-white to-blue-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-blue-950/20">
+      <header className="flex h-20 items-center justify-between border-b border-white/20 bg-white/70 backdrop-blur-xl px-8 shadow-sm dark:bg-slate-900/70 dark:border-slate-800/50">
+        <div className="flex items-center gap-3">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-violet-600">
+            <Upload className="h-4 w-4 text-white" />
+          </div>
+          <h1 className="text-2xl font-bold bg-gradient-to-r from-slate-900 via-blue-800 to-violet-800 bg-clip-text text-transparent dark:from-white dark:via-blue-200 dark:to-violet-200">
+            Resume Uploads
+          </h1>
+        </div>
+        {analysisResult && (
+           <Button onClick={resetState} variant="outline">
+              ← Upload Another Resume
+            </Button>
+        )}
       </header>
-
-      <div className="flex-1 p-6 space-y-6">
-        {/* Upload Form */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Upload className="h-5 w-5" />
-              Upload Resume
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="candidate-name">Candidate Name</Label>
-              <Input 
-                id="candidate-name" 
-                type="text" 
-                placeholder="Enter candidate's full name"
-                value={candidateName}
-                onChange={(e) => setCandidateName(e.target.value)}
-                disabled={isUploading}
-              />
+      <div className="flex-1 p-8 space-y-8">
+        {analysisResult ? (
+          <div className="space-y-8">
+            {/* Header */}
+            <div className="text-center">
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-slate-800 via-blue-700 to-violet-700 bg-clip-text text-transparent dark:from-white dark:via-blue-300 dark:to-violet-300">
+                Analysis for {analysisResult.resume_analysis.candidate_name}
+              </h1>
             </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="resume">Select Resume File</Label>
-              <Input 
-                id="resume" 
-                type="file" 
-                accept=".pdf,.doc,.docx" 
-                onChange={handleFileChange}
-                disabled={isUploading}
-              />
-              {selectedFile && (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <FileText className="h-4 w-4" />
-                  <span>{selectedFile.name}</span>
-                  <span>({(selectedFile.size / 1024 / 1024).toFixed(2)} MB)</span>
+
+            {/* Final Decision Card */}
+            <Card className="bg-gradient-to-br from-slate-50 to-white dark:from-slate-900 dark:to-slate-800/70 border-t-4 border-b-0 border-x-0 border-violet-500 shadow-xl">
+              <CardHeader>
+                <CardTitle className="flex items-center justify-center gap-3 text-2xl">
+                  <Scale className="h-6 w-6 text-violet-500"/>
+                  The Verdict
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="text-center space-y-4">
+                <div className={`inline-flex items-center justify-center rounded-full px-8 py-3 text-3xl font-bold ${analysisResult.decision.decision === 'hire' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300' : 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300'}`}>
+                  {formatStatus(analysisResult.decision.decision)}
                 </div>
-              )}
-            </div>
-
-            {error && (
-              <Alert variant="destructive">
-                <XCircle className="h-4 w-4" />
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-
-            <div className="flex gap-2">
-              <Button 
-                onClick={handleUpload} 
-                disabled={!selectedFile || !candidateName.trim() || isUploading}
-                className="flex items-center gap-2"
-              >
-                {isUploading ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Processing...
-                  </>
-                ) : (
-                  <>
-                    <Upload className="h-4 w-4" />
-                    Upload & Analyze
-                  </>
-                )}
-              </Button>
-              
-              {uploadResult && (
-                <Button variant="outline" onClick={resetResults}>
-                  Upload Another
-                </Button>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Results Display */}
-        {uploadResult && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <CheckCircle className="h-5 w-5 text-green-600" />
-                Analysis Results for {uploadResult.candidate_name}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-sm font-medium">Experience Level</Label>
-                  <div className="mt-1">
-                    <Badge variant="secondary">{uploadResult.experience_level}</Badge>
-                  </div>
+                <p className="text-lg text-slate-600 dark:text-slate-400">
+                  with <span className="font-bold text-slate-800 dark:text-slate-200">{(analysisResult.decision.confidence * 100).toFixed(0)}%</span> confidence
+                </p>
+                <div className="max-w-3xl mx-auto text-left pt-4">
+                  <p className="mt-1 text-slate-700 dark:text-slate-300 italic text-center">"{analysisResult.decision.reasoning.summary}"</p>
                 </div>
                 
-                <div>
-                  <Label className="text-sm font-medium">Years of Experience</Label>
-                  <div className="mt-1">
-                    <Badge variant="outline">{uploadResult.experience_years} years</Badge>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto text-left pt-4">
+                  <div className="space-y-2">
+                    <h3 className="font-semibold text-lg text-emerald-600 dark:text-emerald-400">Pros</h3>
+                    <ul className="space-y-2">
+                      {analysisResult.decision.reasoning.pros.map((pro, i) => (
+                        <li key={i} className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400">
+                           <CheckCircle className="h-4 w-4 mt-0.5 text-emerald-500 shrink-0"/>
+                           <span>{pro}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div className="space-y-2">
+                    <h3 className="font-semibold text-lg text-red-600 dark:text-red-400">Cons</h3>
+                     <ul className="space-y-2">
+                      {analysisResult.decision.reasoning.cons.map((con, i) => (
+                        <li key={i} className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400">
+                           <XCircle className="h-4 w-4 mt-0.5 text-red-500 shrink-0"/>
+                           <span>{con}</span>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
                 </div>
-              </div>
 
-              <div>
-                <Label className="text-sm font-medium">Technical Skills</Label>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {uploadResult.skills.map((skill, index) => (
-                    <Badge key={index} variant="default">{skill}</Badge>
-                  ))}
+                <div className="max-w-3xl mx-auto text-left pt-4">
+                  <Label className="font-semibold text-center block">Key Factors in Decision</Label>
+                  <div className="mt-2 flex flex-wrap gap-2 justify-center">
+                    {analysisResult.decision.key_factors.map((factor, index) => (
+                      <Badge key={index} className="bg-amber-100 border-amber-300 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300 dark:border-amber-700">{factor}</Badge>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              </CardContent>
+            </Card>
 
-              <div>
-                <Label className="text-sm font-medium">Key Achievements</Label>
-                <ul className="mt-2 space-y-1">
-                  {uploadResult.key_achievements.map((achievement, index) => (
-                    <li key={index} className="text-sm text-muted-foreground flex items-start gap-2">
-                      <span className="text-green-600 mt-1">•</span>
-                      {achievement}
-                    </li>
-                  ))}
-                </ul>
-              </div>
+            {/* Main Analysis Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Resume Analysis Card */}
+              <Card className="shadow-lg">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2"><FileText className="h-5 w-5 text-blue-500"/>Resume Breakdown</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex justify-between items-center">
+                     <Label>Experience Level</Label>
+                     <Badge variant="secondary">{analysisResult.resume_analysis.experience_level || "N/A"}</Badge>
+                  </div>
+                   <div className="flex justify-between items-center">
+                     <Label>Years of Experience</Label>
+                     <Badge variant="outline">{analysisResult.resume_analysis.experience_years} years</Badge>
+                  </div>
+                  <div>
+                    <Label className="mb-2 block">Technical Skills</Label>
+                     <div className="flex flex-wrap gap-2">
+                      {analysisResult.resume_analysis.skills.map((skill: string, index: number) => <Badge key={index}>{skill}</Badge>)}
+                     </div>
+                  </div>
+                  <div>
+                     <Label className="mb-2 block">Key Achievements</Label>
+                     <ul className="space-y-2">
+                       {analysisResult.resume_analysis.key_achievements.map((ach, i) => (
+                         <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+                           <CheckCircle className="h-4 w-4 mt-0.5 text-emerald-500 shrink-0"/>
+                           <span>{ach}</span>
+                         </li>
+                       ))}
+                     </ul>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              {/* Intersection Analysis Card */}
+              <Card className="shadow-lg">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2"><Target className="h-5 w-5 text-emerald-500"/>Candidate-Job Fit</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex flex-col items-center">
+                    <Label className="mb-2">Overall Compatibility</Label>
+                    <RadialProgress value={analysisResult.intersection_analysis.overall_compatibility * 100} className="w-40 h-40"/>
+                  </div>
+                  <div>
+                    <Label className="mb-2 block">Skill Matches</Label>
+                     <div className="flex flex-wrap gap-2">
+                      {analysisResult.intersection_analysis.skill_matches.map((skill: string, index: number) => <Badge key={index} className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300">{skill}</Badge>)}
+                     </div>
+                  </div>
+                   <div>
+                    <Label className="mb-2 block">Skill Gaps</Label>
+                     <div className="flex flex-wrap gap-2">
+                      {analysisResult.intersection_analysis.skill_gaps.map((skill: string, index: number) => <Badge key={index} variant="destructive">{skill}</Badge>)}
+                     </div>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <Label>Experience Match</Label>
+                    <Badge variant="outline">{formatStatus(analysisResult.intersection_analysis.experience_match)}</Badge>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
 
-              <div>
-                <Label className="text-sm font-medium">Analysis Summary</Label>
-                <p className="mt-2 text-sm text-muted-foreground bg-muted p-3 rounded-md">
-                  {uploadResult.analysis}
-                </p>
-              </div>
+            {/* Debate Transcript Section */}
+            <div className="text-center">
+              <Button variant="secondary" onClick={() => setShowTranscript(!showTranscript)}>
+                {showTranscript ? "Hide" : "Show"} Full Evaluation Transcript
+              </Button>
+            </div>
 
-              {uploadResult.status && (
-                <div className="flex items-center gap-2 text-sm">
-                  <Badge 
-                    variant={uploadResult.status === 'success' ? 'default' : 'secondary'}
-                  >
-                    Status: {uploadResult.status}
-                  </Badge>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+            {showTranscript && (
+              <Card className="shadow-lg" ref={transcriptRef}>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <BrainCircuit className="h-5 w-5 text-purple-500" />
+                    Full Evaluation Transcript
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {analysisResult.transcript.map((turn, index) => {
+                    if (turn.position === 'evaluation') {
+                      return (
+                        <div key={index} className="p-4 rounded-lg bg-blue-50 dark:bg-blue-900/30">
+                          <h4 className="font-semibold text-lg mb-2 flex items-center gap-2 text-blue-600 dark:text-blue-400">
+                            <Target className="h-5 w-5" />
+                            {turn.agent_name}'s Assessment
+                          </h4>
+                          <p className="text-slate-700 dark:text-slate-300">{turn.content}</p>
+                        </div>
+                      )
+                    }
+                    if (turn.position === 'pro' || turn.position === 'anti') {
+                      const isPro = turn.position === 'pro';
+                      return (
+                        <div key={index} className={`p-4 rounded-lg ${isPro ? 'bg-emerald-50 dark:bg-emerald-900/30' : 'bg-red-50 dark:bg-red-900/30'}`}>
+                          <h4 className={`font-semibold text-lg mb-2 flex items-center gap-2 ${isPro ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
+                            {isPro ? <CheckCircle className="h-5 w-5" /> : <XCircle className="h-5 w-5" />}
+                             {turn.agent_name}'s Argument (Round {Math.floor(index / 2) + (index % 2)})
+                          </h4>
+                          <p className="text-slate-700 dark:text-slate-300">{turn.content}</p>
+                        </div>
+                      )
+                    }
+                    return null;
+                  })}
+                  
+                  {/* Final Decision in Transcript */}
+                  <div className="!mt-8 pt-6 border-t-2 border-dashed border-violet-300 dark:border-violet-700">
+                     <div className="p-4 rounded-lg bg-violet-50 dark:bg-violet-900/40 ring-1 ring-violet-200 dark:ring-violet-800">
+                      <h4 className="font-semibold text-lg mb-2 flex items-center gap-2 text-violet-600 dark:text-violet-400">
+                        <Scale className="h-5 w-5" />
+                        Decision Agent's Final Assessment
+                      </h4>
+                      <p className="text-slate-700 dark:text-slate-300 italic mb-4">
+                        "{analysisResult.decision.reasoning.summary}"
+                      </p>
+                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                          <div className="space-y-1">
+                              <h5 className="font-semibold text-emerald-600 dark:text-emerald-500">Pros</h5>
+                              <ul className="list-disc list-inside text-slate-600 dark:text-slate-400">
+                                  {analysisResult.decision.reasoning.pros.map((pro, i) => <li key={`pro-${i}`}>{pro}</li>)}
+                              </ul>
+                          </div>
+                          <div className="space-y-1">
+                              <h5 className="font-semibold text-red-600 dark:text-red-500">Cons</h5>
+                              <ul className="list-disc list-inside text-slate-600 dark:text-slate-400">
+                                  {analysisResult.decision.reasoning.cons.map((con, i) => <li key={`con-${i}`}>{con}</li>)}
+                              </ul>
+                          </div>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        ) : (
+          <div className="grid gap-6">
+            <div className="space-y-1">
+              <h2 className="text-xl font-semibold">Select a Job Post</h2>
+              <p className="text-muted-foreground">Choose a job to upload a candidate's resume for analysis.</p>
+            </div>
+            {jobPosts.map((job) => (
+              <Card key={job.id} className="group relative overflow-hidden border border-slate-200/60 bg-white/90 backdrop-blur-sm shadow-sm hover:shadow-lg hover:border-blue-300/60 transition-all duration-300 hover:-translate-y-0.5 dark:bg-slate-800/90 dark:border-slate-700/60 dark:hover:border-blue-600/60">
+                <CardHeader className="pb-4">
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-2">
+                      <CardTitle className="text-lg font-bold text-slate-800 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                        {job.title}
+                      </CardTitle>
+                      <div className="flex items-center gap-4 text-sm text-slate-500 dark:text-slate-400">
+                        <div className="flex items-center gap-1">
+                          <MapPin className="h-4 w-4" />
+                          <span>Remote • Full-time</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Calendar className="h-4 w-4" />
+                          <span>Posted {job.posted}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <Badge className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white border-0 shadow-md shadow-emerald-500/20">
+                      {job.status}
+                    </Badge>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center justify-end">
+                    <Button 
+                      size="sm" 
+                      onClick={() => handleUploadClick(job)}
+                      className="gap-2 bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-700 hover:to-violet-700 text-white border-0 shadow-md"
+                    >
+                      <Upload className="h-4 w-4" />
+                      Upload for this Job
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         )}
       </div>
+
+      <UploadResumeDialog
+        job={selectedJob}
+        open={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+        onUploadStart={handleUploadStart}
+        onUploadComplete={handleUploadComplete}
+      />
     </div>
   )
 } 
