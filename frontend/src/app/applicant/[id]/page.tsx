@@ -1,13 +1,17 @@
 import { AppSidebar } from "@/components/layout/app-sidebar"
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
-import { DashboardContent } from "@/components/dashboard/dashboard-content"
+import { ApplicantAnalysis } from "@/components/dashboard/applicant-analysis"
 
-export default function Dashboard() {
+export default async function ApplicantPage({
+  params,
+}: {
+  params: { id: string }
+}) {
   return (
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
-        <DashboardContent />
+        <ApplicantAnalysis applicantId={params.id} />
       </SidebarInset>
     </SidebarProvider>
   )
