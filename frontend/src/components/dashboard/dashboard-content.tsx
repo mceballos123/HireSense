@@ -22,7 +22,6 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { SidebarTrigger } from "@/components/ui/sidebar"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -200,8 +199,6 @@ export function DashboardContent() {
     <div className="flex flex-1 flex-col bg-gradient-to-br from-slate-50 via-white to-blue-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-blue-950/20">
       {/* Header */}
       <header className="flex h-20 items-center gap-3 border-b border-white/20 bg-white/70 backdrop-blur-xl px-8 shadow-sm dark:bg-slate-900/70 dark:border-slate-800/50">
-        <SidebarTrigger className="-ml-1" />
-        <Separator orientation="vertical" className="mr-3 h-6" />
         <div className="flex items-center gap-3">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-violet-600">
             <Sparkles className="h-4 w-4 text-white" />
@@ -308,7 +305,7 @@ export function DashboardContent() {
                       </div>
 
                       {/* Action button */}
-                      <div className="pt-2">
+                      <div className="transition-all duration-300 max-h-0 group-hover:max-h-12 group-hover:pt-2 overflow-hidden">
                         <Link href={`/applicant/${applicant.id}`}>
                           <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 gap-2">
                             <span>View Profile</span>

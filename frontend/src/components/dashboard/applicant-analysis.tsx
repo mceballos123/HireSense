@@ -1,6 +1,14 @@
 "use client"
 
-import { ArrowLeft, Download, Mail, Phone, User, Sparkles } from "lucide-react"
+import {
+  ArrowLeft,
+  Download,
+  Mail,
+  Phone,
+  User,
+  Sparkles,
+  UserCheck,
+} from "lucide-react"
 import Link from "next/link"
 
 import { Badge } from "@/components/ui/badge"
@@ -8,7 +16,6 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Separator } from "@/components/ui/separator"
-import { SidebarTrigger } from "@/components/ui/sidebar"
 import { Label } from "@/components/ui/label"
 
 // Mock detailed applicant data
@@ -57,20 +64,23 @@ export function ApplicantAnalysis({ applicantId }: ApplicantAnalysisProps) {
     return (
       <div className="flex flex-1 flex-col bg-gradient-to-br from-slate-50 via-white to-blue-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-blue-950/20">
         <header className="flex h-20 items-center gap-3 border-b border-white/20 bg-white/70 backdrop-blur-xl px-8 shadow-sm dark:bg-slate-900/70 dark:border-slate-800/50">
-          <SidebarTrigger className="-ml-1" />
-          <Separator orientation="vertical" className="mr-3 h-6" />
-          <Link href="/">
-            <Button variant="ghost" size="sm" className="gap-2 hover:bg-slate-100 dark:hover:bg-slate-800">
-              <ArrowLeft className="h-4 w-4" />
-              Back to Dashboard
-            </Button>
-          </Link>
-        </header>
-        <div className="flex flex-1 items-center justify-center">
-          <div className="text-center space-y-4">
-            <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Applicant not found</h2>
-            <p className="text-slate-600 dark:text-slate-400">The requested applicant profile could not be located.</p>
+          <div className="flex items-center gap-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-violet-600">
+              <UserCheck className="h-4 w-4 text-white" />
+            </div>
+            <h1 className="text-xl font-bold bg-gradient-to-r from-slate-900 via-blue-800 to-violet-800 bg-clip-text text-transparent dark:from-white dark:via-blue-200 dark:to-violet-200">
+              Applicant Analysis
+            </h1>
           </div>
+        </header>
+        <div className="flex flex-col items-center justify-center h-full text-center text-slate-500 dark:text-slate-400 p-8">
+          <User className="h-12 w-12 mx-auto mb-4 text-slate-400" />
+          <h3 className="text-xl font-semibold mb-2 text-slate-700 dark:text-slate-300">
+            Select an Applicant
+          </h3>
+          <p>
+            Choose an applicant from the list to view their detailed analysis.
+          </p>
         </div>
       </div>
     )
@@ -91,20 +101,38 @@ export function ApplicantAnalysis({ applicantId }: ApplicantAnalysisProps) {
   return (
     <div className="flex flex-1 flex-col bg-gradient-to-br from-slate-50 via-white to-blue-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-blue-950/20">
       <header className="flex h-20 items-center gap-3 border-b border-white/20 bg-white/70 backdrop-blur-xl px-8 shadow-sm dark:bg-slate-900/70 dark:border-slate-800/50">
-        <SidebarTrigger className="-ml-1" />
-        <Separator orientation="vertical" className="mr-3 h-6" />
         <Link href="/">
-          <Button variant="ghost" size="sm" className="gap-2 hover:bg-slate-100 dark:hover:bg-slate-800">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="gap-2 hover:bg-slate-100 dark:hover:bg-slate-800"
+          >
             <ArrowLeft className="h-4 w-4" />
             Back to Dashboard
           </Button>
         </Link>
+        <Separator orientation="vertical" className="h-6" />
+        <div className="flex items-center gap-3">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-violet-600">
+            <Sparkles className="h-4 w-4 text-white" />
+          </div>
+          <h1 className="text-xl font-bold bg-gradient-to-r from-slate-900 via-blue-800 to-violet-800 bg-clip-text text-transparent dark:from-white dark:via-blue-200 dark:to-violet-200">
+            Applicant Analysis
+          </h1>
+        </div>
         <div className="ml-auto flex gap-3">
-          <Button variant="outline" size="sm" className="gap-2 border-slate-300 hover:bg-slate-50 dark:border-slate-600 dark:hover:bg-slate-800">
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2 border-slate-300 hover:bg-slate-50 dark:border-slate-600 dark:hover:bg-slate-800"
+          >
             <Download className="h-4 w-4" />
             Download Resume
           </Button>
-          <Button size="sm" className="gap-2 bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-700 hover:to-violet-700 text-white border-0 shadow-lg shadow-blue-500/25">
+          <Button
+            size="sm"
+            className="gap-2 bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-700 hover:to-violet-700 text-white border-0 shadow-lg shadow-blue-500/25"
+          >
             <Mail className="h-4 w-4" />
             Contact
           </Button>

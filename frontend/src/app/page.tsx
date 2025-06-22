@@ -1,14 +1,5 @@
-import { AppSidebar } from "@/components/layout/app-sidebar"
-import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
 import { DashboardContent } from "@/components/dashboard/dashboard-content"
 
 export default function Dashboard() {
-  return (
-    <SidebarProvider>
-      <AppSidebar />
-      <SidebarInset>
-        <DashboardContent />
-      </SidebarInset>
-    </SidebarProvider>
-  )
+  return <DashboardContent />
 }
