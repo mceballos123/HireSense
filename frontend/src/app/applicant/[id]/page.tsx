@@ -5,13 +5,15 @@ import { ApplicantAnalysis } from "@/components/dashboard/applicant-analysis"
 export default async function ApplicantPage({
   params,
 }: {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }) {
+  const { id } = await params;
+  
   return (
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
-        <ApplicantAnalysis applicantId={params.id} />
+        <ApplicantAnalysis applicantId={id} />
       </SidebarInset>
     </SidebarProvider>
   )

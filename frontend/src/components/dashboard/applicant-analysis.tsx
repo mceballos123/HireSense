@@ -1,6 +1,6 @@
 "use client"
 
-import { ArrowLeft, Download, Mail, Phone } from "lucide-react"
+import { ArrowLeft, Download, Mail, Phone, User, Sparkles } from "lucide-react"
 import Link from "next/link"
 
 import { Badge } from "@/components/ui/badge"
@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar"
+import { Label } from "@/components/ui/label"
 
 // Mock detailed applicant data
 const getApplicantData = (id: string) => {
@@ -54,178 +55,196 @@ export function ApplicantAnalysis({ applicantId }: ApplicantAnalysisProps) {
 
   if (!applicant) {
     return (
-      <div className="flex flex-1 flex-col">
-        <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+      <div className="flex flex-1 flex-col bg-gradient-to-br from-slate-50 via-white to-blue-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-blue-950/20">
+        <header className="flex h-20 items-center gap-3 border-b border-white/20 bg-white/70 backdrop-blur-xl px-8 shadow-sm dark:bg-slate-900/70 dark:border-slate-800/50">
           <SidebarTrigger className="-ml-1" />
-          <Separator orientation="vertical" className="mr-2 h-4" />
+          <Separator orientation="vertical" className="mr-3 h-6" />
           <Link href="/">
-            <Button variant="ghost" size="sm">
-              <ArrowLeft className="h-4 w-4 mr-2" />
+            <Button variant="ghost" size="sm" className="gap-2 hover:bg-slate-100 dark:hover:bg-slate-800">
+              <ArrowLeft className="h-4 w-4" />
               Back to Dashboard
             </Button>
           </Link>
         </header>
         <div className="flex flex-1 items-center justify-center">
-          <p>Applicant not found</p>
+          <div className="text-center space-y-4">
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Applicant not found</h2>
+            <p className="text-slate-600 dark:text-slate-400">The requested applicant profile could not be located.</p>
+          </div>
         </div>
       </div>
     )
   }
 
   const getScoreColor = (score: number) => {
-    if (score >= 85) return "text-green-600"
-    if (score >= 70) return "text-yellow-600"
-    return "text-red-600"
+    if (score >= 85) return "text-emerald-600 dark:text-emerald-400"
+    if (score >= 70) return "text-amber-600 dark:text-amber-400"
+    return "text-red-600 dark:text-red-400"
   }
 
   const getScoreBadgeVariant = (score: number) => {
-    if (score >= 85) return "default"
-    if (score >= 70) return "secondary"
-    return "destructive"
+    if (score >= 85) return "bg-emerald-500 text-white border-0"
+    if (score >= 70) return "bg-amber-500 text-white border-0"
+    return "bg-red-500 text-white border-0"
   }
 
   return (
-    <div className="flex flex-1 flex-col">
-      <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+    <div className="flex flex-1 flex-col bg-gradient-to-br from-slate-50 via-white to-blue-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-blue-950/20">
+      <header className="flex h-20 items-center gap-3 border-b border-white/20 bg-white/70 backdrop-blur-xl px-8 shadow-sm dark:bg-slate-900/70 dark:border-slate-800/50">
         <SidebarTrigger className="-ml-1" />
-        <Separator orientation="vertical" className="mr-2 h-4" />
+        <Separator orientation="vertical" className="mr-3 h-6" />
         <Link href="/">
-          <Button variant="ghost" size="sm">
-            <ArrowLeft className="h-4 w-4 mr-2" />
+          <Button variant="ghost" size="sm" className="gap-2 hover:bg-slate-100 dark:hover:bg-slate-800">
+            <ArrowLeft className="h-4 w-4" />
             Back to Dashboard
           </Button>
         </Link>
-        <div className="ml-auto flex gap-2">
-          <Button variant="outline" size="sm">
-            <Download className="h-4 w-4 mr-2" />
+        <div className="ml-auto flex gap-3">
+          <Button variant="outline" size="sm" className="gap-2 border-slate-300 hover:bg-slate-50 dark:border-slate-600 dark:hover:bg-slate-800">
+            <Download className="h-4 w-4" />
             Download Resume
           </Button>
-          <Button size="sm">
-            <Mail className="h-4 w-4 mr-2" />
+          <Button size="sm" className="gap-2 bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-700 hover:to-violet-700 text-white border-0 shadow-lg shadow-blue-500/25">
+            <Mail className="h-4 w-4" />
             Contact
           </Button>
         </div>
       </header>
 
-      <div className="flex-1 p-6 space-y-6">
+      <div className="flex-1 p-8 space-y-8">
         {/* Header */}
-        <div className="flex items-start justify-between">
-          <div>
-            <h1 className="text-2xl font-bold">{applicant.name}</h1>
-            <p className="text-muted-foreground">{applicant.position}</p>
-            <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
-              <div className="flex items-center gap-1">
-                <Mail className="h-4 w-4" />
-                {applicant.email}
+        <Card className="border border-slate-200/60 bg-white/90 backdrop-blur-sm shadow-sm dark:bg-slate-800/90 dark:border-slate-700/60">
+          <CardContent className="p-8">
+            <div className="flex items-start justify-between">
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 rounded-lg bg-gradient-to-br from-blue-600 to-violet-600">
+                    <User className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <h1 className="text-3xl font-bold text-slate-900 dark:text-white">{applicant.name}</h1>
+                    <p className="text-lg text-slate-600 dark:text-slate-400 font-medium">{applicant.position}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-6 text-sm text-slate-600 dark:text-slate-400">
+                  <div className="flex items-center gap-2">
+                    <Mail className="h-4 w-4" />
+                    <span>{applicant.email}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Phone className="h-4 w-4" />
+                    <span>{applicant.phone}</span>
+                  </div>
+                </div>
               </div>
-              <div className="flex items-center gap-1">
-                <Phone className="h-4 w-4" />
-                {applicant.phone}
+              <div className="text-center space-y-2">
+                <div className="flex items-center justify-center gap-2 p-4 rounded-xl bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200/50 dark:from-emerald-950/50 dark:to-teal-950/50 dark:border-emerald-800/30">
+                  <Sparkles className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                  <div className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">
+                    {applicant.overallScore}%
+                  </div>
+                </div>
+                <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Overall AI Fit Score</p>
               </div>
             </div>
-          </div>
-          <div className="text-right">
-            <div className="text-3xl font-bold mb-1">
-              <Badge
-                variant={getScoreBadgeVariant(applicant.overallScore)}
-                className={`text-lg px-3 py-1 ${getScoreColor(applicant.overallScore)}`}
-              >
-                {applicant.overallScore}%
-              </Badge>
-            </div>
-            <p className="text-sm text-muted-foreground">Overall AI Fit Score</p>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Skills Analysis */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Skills Analysis</CardTitle>
+          <Card className="border border-slate-200/60 bg-white/90 backdrop-blur-sm shadow-sm hover:shadow-md transition-shadow dark:bg-slate-800/90 dark:border-slate-700/60">
+            <CardHeader className="pb-6">
+              <CardTitle className="text-xl font-bold text-slate-900 dark:text-white">Skills Analysis</CardTitle>
+              <p className="text-slate-600 dark:text-slate-400">AI-evaluated technical competencies</p>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-6">
               {applicant.skills.map((skill) => (
-                <div key={skill.name} className="space-y-2">
+                <div key={skill.name} className="space-y-3">
                   <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">{skill.name}</span>
+                    <div className="flex items-center gap-3">
+                      <span className="font-medium text-slate-900 dark:text-white">{skill.name}</span>
                       {skill.required && (
-                        <Badge variant="outline" className="text-xs">
+                        <Badge variant="outline" className="text-xs border-blue-200 text-blue-700 bg-blue-50 dark:border-blue-800/30 dark:text-blue-400 dark:bg-blue-950/50">
                           Required
                         </Badge>
                       )}
                     </div>
-                    <span className={`font-medium ${getScoreColor(skill.score)}`}>{skill.score}%</span>
+                    <span className={`font-bold text-lg ${getScoreColor(skill.score)}`}>{skill.score}%</span>
                   </div>
-                  <Progress value={skill.score} className="h-2" />
+                  <Progress value={skill.score} className="h-3" />
                 </div>
               ))}
             </CardContent>
           </Card>
 
           {/* AI Summary */}
-          <Card>
-            <CardHeader>
-              <CardTitle>AI Analysis Summary</CardTitle>
+          <Card className="border border-slate-200/60 bg-white/90 backdrop-blur-sm shadow-sm hover:shadow-md transition-shadow dark:bg-slate-800/90 dark:border-slate-700/60">
+            <CardHeader className="pb-6">
+              <CardTitle className="text-xl font-bold text-slate-900 dark:text-white">AI Analysis Summary</CardTitle>
+              <p className="text-slate-600 dark:text-slate-400">Comprehensive candidate evaluation</p>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <h4 className="font-medium mb-2">Overview</h4>
-                <p className="text-sm text-muted-foreground">{applicant.summary}</p>
+            <CardContent className="space-y-6">
+              <div className="p-4 rounded-lg bg-slate-50 border border-slate-200/50 dark:bg-slate-800/50 dark:border-slate-700/50">
+                <h4 className="font-bold text-base mb-3 text-slate-900 dark:text-white">Overview</h4>
+                <p className="text-sm leading-relaxed text-slate-700 dark:text-slate-300">{applicant.summary}</p>
               </div>
 
-              <div>
-                <h4 className="font-medium mb-2 text-green-600">Strengths</h4>
-                <ul className="text-sm text-muted-foreground space-y-1">
+              <div className="p-4 rounded-lg bg-emerald-50 border border-emerald-200/50 dark:bg-emerald-900/20 dark:border-emerald-800/30">
+                <h4 className="font-bold text-base mb-3 flex items-center gap-2 text-emerald-800 dark:text-emerald-200">
+                  ✓ Key Strengths
+                </h4>
+                <ul className="space-y-2">
                   {applicant.strengths.map((strength, index) => (
-                    <li key={index} className="flex items-start gap-2">
-                      <span className="text-green-500 mt-1">•</span>
+                    <li key={index} className="text-sm flex items-start gap-2 text-emerald-700 dark:text-emerald-300">
+                      <span className="text-emerald-500 mt-1 text-xs">●</span>
                       {strength}
                     </li>
                   ))}
                 </ul>
               </div>
 
-              <div>
-                <h4 className="font-medium mb-2 text-yellow-600">Areas of Concern</h4>
-                <ul className="text-sm text-muted-foreground space-y-1">
+              <div className="p-4 rounded-lg bg-amber-50 border border-amber-200/50 dark:bg-amber-900/20 dark:border-amber-800/30">
+                <h4 className="font-bold text-base mb-3 flex items-center gap-2 text-amber-800 dark:text-amber-200">
+                  ⚠ Areas of Concern
+                </h4>
+                <ul className="space-y-2">
                   {applicant.concerns.map((concern, index) => (
-                    <li key={index} className="flex items-start gap-2">
-                      <span className="text-yellow-500 mt-1">•</span>
+                    <li key={index} className="text-sm flex items-start gap-2 text-amber-700 dark:text-amber-300">
+                      <span className="text-amber-500 mt-1 text-xs">●</span>
                       {concern}
                     </li>
                   ))}
                 </ul>
               </div>
 
-              <div className="pt-4 border-t">
-                <h4 className="font-medium mb-2">Recommendation</h4>
-                <p className="text-sm font-medium text-green-600">{applicant.recommendation}</p>
+              <div className="p-4 rounded-lg bg-blue-50 border border-blue-200/50 dark:bg-blue-900/20 dark:border-blue-800/30">
+                <h4 className="font-bold text-base mb-3 flex items-center gap-2 text-blue-800 dark:text-blue-200">
+                  💡 Recommendation
+                </h4>
+                <p className="text-sm text-blue-700 dark:text-blue-300 font-medium">{applicant.recommendation}</p>
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Additional Info */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Experience</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">{applicant.experience}</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Education</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">{applicant.education}</p>
-            </CardContent>
-          </Card>
-        </div>
+        {/* Additional Details */}
+        <Card className="border border-slate-200/60 bg-white/90 backdrop-blur-sm shadow-sm dark:bg-slate-800/90 dark:border-slate-700/60">
+          <CardHeader>
+            <CardTitle className="text-xl font-bold text-slate-900 dark:text-white">Additional Information</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <Label className="text-sm font-medium text-slate-700 dark:text-slate-300">Experience</Label>
+                <p className="text-slate-900 dark:text-white font-medium">{applicant.experience}</p>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-sm font-medium text-slate-700 dark:text-slate-300">Education</Label>
+                <p className="text-slate-900 dark:text-white font-medium">{applicant.education}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   )
