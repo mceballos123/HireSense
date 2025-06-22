@@ -6,15 +6,15 @@ This agent evaluates the intersection between job requirements and candidate pro
 """
 
 from uagents import Agent, Context, Protocol
-from uagents.setup import fund_agent_if_low
+# from uagents.setup import fund_agent_if_low
 from .models import IntersectionRequest, IntersectionResponse
 from .llm_client import SimpleLLMAgent
 
 
 class IntersectionAgent(Agent):
-    def __init__(self):
-        super().__init__("intersection_evaluator", 8003, "intersection_seed")
-        fund_agent_if_low(self.wallet.address())
+    def __init__(self, port=8003):
+        super().__init__("intersection_evaluator", port, "intersection_seed")
+        # fund_agent_if_low(self.wallet.address())
 
         self.llm_agent = SimpleLLMAgent("intersection_evaluator")
         self.protocol = Protocol()

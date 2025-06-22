@@ -8,7 +8,7 @@ Coordinates all agents and provides the entry point.
 
 import asyncio
 from uagents import Agent, Context, Protocol
-from uagents.setup import fund_agent_if_low
+# from uagents.setup import fund_agent_if_low
 from hiring_agents import (
     JobParserAgent, ResumeParserAgent, IntersectionAgent,
     ProHireAgent, AntiHireAgent, DecisionAgent
@@ -16,15 +16,18 @@ from hiring_agents import (
 from hiring_agents.models import (
     JobParseRequest, ResumeParseRequest, IntersectionRequest,
     DebateRequest, DecisionRequest, JobParseResponse, ResumeParseResponse,
-    IntersectionResponse, DebateResponse, DecisionResponse, FinalResult,
-    TranscriptEntry
+    IntersectionResponse, DebateResponse, DecisionResponse,
+    TranscriptEntry, FinalResult
 )
 
 # Main Coordinator
 class HiringCoordinator(Agent):
-    def __init__(self):
-        super().__init__("hiring_coordinator", 8007, "coordinator_seed")
-        fund_agent_if_low(self.wallet.address())
+    def __init__(self, event_emitter=None, base_port=8007):
+        super().__init__("hiring_coordinator", base_port, "coordinator_seed")
+        # fund_agent_if_low(self.wallet.address())  # Disabled for local operation
+        
+        # Store event emitter for real-time updates
+        self.event_emitter = event_emitter
         
         # Store agent addresses
         self.job_parser_address = None
@@ -90,6 +93,11 @@ class HiringCoordinator(Agent):
             self.job_analysis = msg
             self.job_complete = True
             print(f"Job Analysis: {msg.analysis}")
+            
+            # Emit WebSocket event
+            if self.event_emitter:
+                await self.event_emitter("Job Parser Agent", msg.analysis, "parsing")
+            
             await self._check_and_proceed(ctx)
         
         @self.protocol.on_message(model=ResumeParseResponse)
@@ -97,6 +105,11 @@ class HiringCoordinator(Agent):
             self.resume_analysis = msg
             self.resume_complete = True
             print(f"Resume Analysis: {msg.analysis}")
+            
+            # Emit WebSocket event
+            if self.event_emitter:
+                await self.event_emitter("Resume Parser Agent", msg.analysis, "parsing")
+            
             await self._check_and_proceed(ctx)
         
         @self.protocol.on_message(model=IntersectionResponse)
@@ -106,6 +119,11 @@ class HiringCoordinator(Agent):
             print(f"\n🔍 STEP 2: Evaluating Intersection")
             print(f"Intersection Analysis: {msg.analysis}")
             print(f"Overall Compatibility: {msg.overall_compatibility:.2f}")
+            
+            # Emit WebSocket event
+            if self.event_emitter:
+                await self.event_emitter("Intersection Evaluator", msg.analysis, "evaluation", "evaluation")
+            
             await self._start_debate(ctx)
         
         @self.protocol.on_message(model=DebateResponse)
@@ -113,14 +131,23 @@ class HiringCoordinator(Agent):
             if msg.position == "pro":
                 self.pro_arguments.append(msg)
                 print(f"Pro-Hire Round {len(self.pro_arguments)}: {msg.argument}")
+                
+                # Emit WebSocket event
+                if self.event_emitter:
+                    await self.event_emitter("Pro-Hire Advocate", msg.argument, "debate", "pro")
             else:
                 self.anti_arguments.append(msg)
                 print(f"Anti-Hire Round {len(self.anti_arguments)}: {msg.argument}")
+                
+                # Emit WebSocket event
+                if self.event_emitter:
+                    await self.event_emitter("Anti-Hire Advocate", msg.argument, "debate", "anti")
             
             await self._continue_debate(ctx)
         
         @self.protocol.on_message(model=DecisionResponse)
         async def handle_decision_response(ctx: Context, sender: str, msg: DecisionResponse):
+            self.final_decision = msg
             print(f"\n🎯 STEP 4: Making Final Decision")
             print("\n" + "="*60)
             print("FINAL HIRING DECISION")
@@ -130,7 +157,12 @@ class HiringCoordinator(Agent):
             print(f"Reasoning: {msg.reasoning}")
             print(f"Key Factors: {', '.join(msg.key_factors)}")
             print("="*60)
-            self.final_decision = msg
+            
+            # Emit WebSocket event
+            if self.event_emitter:
+                decision_summary = f"Decision: {msg.decision.upper()}\nConfidence: {msg.confidence:.2f}\nReasoning: {msg.reasoning}"
+                await self.event_emitter("Decision Agent", decision_summary, "decision", "decision")
+            
             self.decision_complete = True
         
         self.include(self.protocol)
@@ -139,6 +171,10 @@ class HiringCoordinator(Agent):
         """Check if we have both job and resume analysis, then proceed to intersection"""
         if self.job_complete and self.resume_complete:
             print(f"\n🔍 STEP 2: Evaluating Intersection")
+            
+            # Emit step transition event
+            if self.event_emitter:
+                await self.event_emitter("System", "Starting intersection evaluation", "intersection")
             
             request = IntersectionRequest(
                 job_analysis=self.job_analysis,
@@ -149,6 +185,10 @@ class HiringCoordinator(Agent):
     async def _start_debate(self, ctx: Context):
         """Start the debate between pro and anti hire agents"""
         print(f"\n⚖️ STEP 3: Conducting Debate")
+        
+        # Emit step transition event
+        if self.event_emitter:
+            await self.event_emitter("System", "Starting debate phase", "debate")
         
         # Start with pro-hire argument
         pro_request = DebateRequest(
@@ -189,6 +229,10 @@ class HiringCoordinator(Agent):
             # Debate complete, make decision
             print(f"\n🎯 STEP 4: Making Final Decision")
             
+            # Emit step transition event
+            if self.event_emitter:
+                await self.event_emitter("System", "Making final hiring decision", "decision")
+            
             decision_request = DecisionRequest(
                 pro_arguments=self.pro_arguments,
                 anti_arguments=self.anti_arguments,
@@ -198,109 +242,151 @@ class HiringCoordinator(Agent):
 
 # Main execution function
 async def run_hiring_system(resume_content: str, job_description: str, 
-                          candidate_name: str, job_title: str):
+                          candidate_name: str, job_title: str, event_emitter=None):
     """Run the complete hiring system with uAgents"""
     print("🚀 Starting uAgents Hiring System")
     print("="*60)
     
-    # Create all agents
-    job_parser = JobParserAgent()
-    resume_parser = ResumeParserAgent()
-    intersection_evaluator = IntersectionAgent()
-    pro_hire = ProHireAgent()
-    anti_hire = AntiHireAgent()
-    decision_maker = DecisionAgent()
-    coordinator = HiringCoordinator()
+    # Use dynamic ports to avoid conflicts
+    import random
+    base_port = random.randint(9000, 9500)
+    
+    # Create all agents with dynamic ports
+    job_parser = JobParserAgent(base_port + 1)
+    resume_parser = ResumeParserAgent(base_port + 2)
+    intersection_evaluator = IntersectionAgent(base_port + 3)
+    pro_hire = ProHireAgent(base_port + 4)
+    anti_hire = AntiHireAgent(base_port + 5)
+    decision_maker = DecisionAgent(base_port + 6)
+    coordinator = HiringCoordinator(event_emitter, base_port + 7)
     
     # Start all agents in background tasks
-    job_parser_task = asyncio.create_task(job_parser.run_async())
-    resume_parser_task = asyncio.create_task(resume_parser.run_async())
-    intersection_task = asyncio.create_task(intersection_evaluator.run_async())
-    pro_hire_task = asyncio.create_task(pro_hire.run_async())
-    anti_hire_task = asyncio.create_task(anti_hire.run_async())
-    decision_task = asyncio.create_task(decision_maker.run_async())
-    coordinator_task = asyncio.create_task(coordinator.run_async())
-    
-    # Wait for initialization
-    print("⏳ Waiting for agents to initialize...")
-    await asyncio.sleep(5)
-    
-    # Store addresses
-    coordinator.job_parser_address = job_parser.address
-    coordinator.resume_parser_address = resume_parser.address
-    coordinator.intersection_address = intersection_evaluator.address
-    coordinator.pro_hire_address = pro_hire.address
-    coordinator.anti_hire_address = anti_hire.address
-    coordinator.decision_address = decision_maker.address
-    
-    # Store initial data
-    coordinator.resume_content = resume_content
-    coordinator.job_description = job_description
-    coordinator.candidate_name = candidate_name
-    coordinator.job_title = job_title
-    
-    # Wait for decision to complete
-    print("⏳ Waiting for hiring process to complete...")
-    while not coordinator.decision_complete:
-        await asyncio.sleep(1)
-    
-    # Cancel all tasks
-    job_parser_task.cancel()
-    resume_parser_task.cancel()
-    intersection_task.cancel()
-    pro_hire_task.cancel()
-    anti_hire_task.cancel()
-    decision_task.cancel()
-    coordinator_task.cancel()
-    
-    print("✅ Hiring process finished.")
+    tasks = []
+    try:
+        job_parser_task = asyncio.create_task(job_parser.run_async())
+        tasks.append(job_parser_task)
+        resume_parser_task = asyncio.create_task(resume_parser.run_async())
+        tasks.append(resume_parser_task)
+        intersection_task = asyncio.create_task(intersection_evaluator.run_async())
+        tasks.append(intersection_task)
+        pro_hire_task = asyncio.create_task(pro_hire.run_async())
+        tasks.append(pro_hire_task)
+        anti_hire_task = asyncio.create_task(anti_hire.run_async())
+        tasks.append(anti_hire_task)
+        decision_task = asyncio.create_task(decision_maker.run_async())
+        tasks.append(decision_task)
+        coordinator_task = asyncio.create_task(coordinator.run_async())
+        tasks.append(coordinator_task)
+        
+        # Wait for initialization
+        print("⏳ Waiting for agents to initialize...")
+        await asyncio.sleep(5)
+        
+        # Store addresses
+        coordinator.job_parser_address = job_parser.address
+        coordinator.resume_parser_address = resume_parser.address
+        coordinator.intersection_address = intersection_evaluator.address
+        coordinator.pro_hire_address = pro_hire.address
+        coordinator.anti_hire_address = anti_hire.address
+        coordinator.decision_address = decision_maker.address
+        
+        # Store initial data
+        coordinator.resume_content = resume_content
+        coordinator.job_description = job_description
+        coordinator.candidate_name = candidate_name
+        coordinator.job_title = job_title
+        
+        # Wait for decision to complete with timeout
+        print("⏳ Waiting for hiring process to complete...")
+        timeout_counter = 0
+        max_timeout = 120  # 2 minutes max
+        
+        while not coordinator.decision_complete and timeout_counter < max_timeout:
+            await asyncio.sleep(1)
+            timeout_counter += 1
+        
+        if timeout_counter >= max_timeout:
+            print("⚠️ Hiring process timed out")
+            if event_emitter:
+                await event_emitter("System", "Process timed out", "error")
+            return None
+        
+        print("✅ Hiring process finished.")
 
-    # Construct the full transcript
-    transcript = []
+        # Construct the full transcript
+        transcript = []
 
-    # 1. Add Intersection Agent's output
-    if coordinator.intersection_analysis:
-        transcript.append(TranscriptEntry(
-            agent_name="Intersection Evaluator",
-            position="evaluation",
-            content=coordinator.intersection_analysis.analysis,
-            details=coordinator.intersection_analysis.dict()
-        ))
-
-    # 2. Add Debate arguments
-    pro_idx, anti_idx = 0, 0
-    num_pro = len(coordinator.pro_arguments)
-    num_anti = len(coordinator.anti_arguments)
-    while pro_idx < num_pro or anti_idx < num_anti:
-        if pro_idx < num_pro:
-            arg = coordinator.pro_arguments[pro_idx]
+        # 1. Add Intersection Agent's output
+        if coordinator.intersection_analysis:
             transcript.append(TranscriptEntry(
-                agent_name="Pro-Hire Advocate",
-                position="pro",
-                content=arg.argument,
-                details=arg.dict()
+                agent_name="Intersection Evaluator",
+                position="evaluation",
+                content=coordinator.intersection_analysis.analysis,
+                details=coordinator.intersection_analysis.model_dump()
             ))
-            pro_idx += 1
-        if anti_idx < num_anti:
-            arg = coordinator.anti_arguments[anti_idx]
-            transcript.append(TranscriptEntry(
-                agent_name="Anti-Hire Advocate",
-                position="anti",
-                content=arg.argument,
-                details=arg.dict()
-            ))
-            anti_idx += 1
-    
-    # Construct and return the final comprehensive result
-    if coordinator.final_decision:
-        return FinalResult(
-            resume_analysis=coordinator.resume_analysis,
-            job_analysis=coordinator.job_analysis,
-            intersection_analysis=coordinator.intersection_analysis,
-            decision=coordinator.final_decision,
-            transcript=transcript,
-        )
-    return None
+
+        # 2. Add Debate arguments
+        pro_idx, anti_idx = 0, 0
+        num_pro = len(coordinator.pro_arguments)
+        num_anti = len(coordinator.anti_arguments)
+        while pro_idx < num_pro or anti_idx < num_anti:
+            if pro_idx < num_pro:
+                arg = coordinator.pro_arguments[pro_idx]
+                transcript.append(TranscriptEntry(
+                    agent_name="Pro-Hire Advocate",
+                    position="pro",
+                    content=arg.argument,
+                    details=arg.model_dump()
+                ))
+                pro_idx += 1
+            if anti_idx < num_anti:
+                arg = coordinator.anti_arguments[anti_idx]
+                transcript.append(TranscriptEntry(
+                    agent_name="Anti-Hire Advocate",
+                    position="anti",
+                    content=arg.argument,
+                    details=arg.model_dump()
+                ))
+                anti_idx += 1
+        
+        # Construct and return the final comprehensive result
+        if coordinator.final_decision:
+            return FinalResult(
+                resume_analysis=coordinator.resume_analysis,
+                job_analysis=coordinator.job_analysis,
+                intersection_analysis=coordinator.intersection_analysis,
+                decision=coordinator.final_decision,
+                transcript=transcript,
+            )
+        return None
+        
+    except Exception as e:
+        print(f"❌ Error in hiring system: {e}")
+        if event_emitter:
+            await event_emitter("System", f"Error: {str(e)}", "error")
+        return None
+        
+    finally:
+        # Ultra-gentle cleanup that won't crash the server
+        print("🧹 Cleaning up agents...")
+        try:
+            # Don't await anything that could block or cause recursion
+            # Just cancel tasks and move on immediately
+            for task in tasks:
+                if not task.done():
+                    task.cancel()
+            
+            # Use asyncio.create_task to avoid blocking the cleanup
+            async def gentle_cleanup():
+                await asyncio.sleep(0.1)  # Brief pause
+            
+            # Fire and forget - don't await this
+            asyncio.create_task(gentle_cleanup())
+            
+        except Exception:
+            pass  # Completely ignore any cleanup errors
+        
+        print("✅ Agent cleanup completed")
 
 # Test data and main execution
 if __name__ == "__main__":

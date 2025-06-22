@@ -6,15 +6,15 @@ This agent parses resumes using ASI:One LLM to extract candidate information.
 """
 
 from uagents import Agent, Context, Protocol
-from uagents.setup import fund_agent_if_low
+# from uagents.setup import fund_agent_if_low  # Disabled to avoid network calls
 from .models import ResumeParseRequest, ResumeParseResponse
 from .llm_client import SimpleLLMAgent
 
 
 class ResumeParserAgent(Agent):
-    def __init__(self):
-        super().__init__("resume_parser", 8002, "resume_parser_seed")
-        fund_agent_if_low(self.wallet.address())
+    def __init__(self, port=8002):
+        super().__init__("resume_parser", port, "resume_parser_seed")
+        # fund_agent_if_low(self.wallet.address())  # Disabled for local operation
 
         self.llm_agent = SimpleLLMAgent("resume_parser")
         self.protocol = Protocol()

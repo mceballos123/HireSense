@@ -6,15 +6,15 @@ This agent advocates for hiring candidates by building compelling pro-hire argum
 """
 
 from uagents import Agent, Context, Protocol
-from uagents.setup import fund_agent_if_low
+# from uagents.setup import fund_agent_if_low
 from .models import DebateRequest, DebateResponse
 from .llm_client import SimpleLLMAgent
 
 
 class ProHireAgent(Agent):
-    def __init__(self):
-        super().__init__("pro_hire_advocate", 8004, "pro_hire_seed")
-        fund_agent_if_low(self.wallet.address())
+    def __init__(self, port=8004):
+        super().__init__("pro_hire_advocate", port, "pro_hire_seed")
+        # fund_agent_if_low(self.wallet.address())
 
         self.llm_agent = SimpleLLMAgent("pro_hire_advocate")
         self.protocol = Protocol()

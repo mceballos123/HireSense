@@ -6,15 +6,15 @@ This agent advocates against hiring candidates by building compelling anti-hire 
 """
 
 from uagents import Agent, Context, Protocol
-from uagents.setup import fund_agent_if_low
+# from uagents.setup import fund_agent_if_low
 from .models import DebateRequest, DebateResponse
 from .llm_client import SimpleLLMAgent
 
 
 class AntiHireAgent(Agent):
-    def __init__(self):
-        super().__init__("anti_hire_advocate", 8005, "anti_hire_seed")
-        fund_agent_if_low(self.wallet.address())
+    def __init__(self, port=8005):
+        super().__init__("anti_hire_advocate", port, "anti_hire_seed")
+        # fund_agent_if_low(self.wallet.address())
 
         self.llm_agent = SimpleLLMAgent("anti_hire_advocate")
         self.protocol = Protocol()

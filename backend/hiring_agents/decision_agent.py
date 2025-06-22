@@ -6,15 +6,15 @@ This agent makes the final hiring decision based on the debate between pro and a
 """
 
 from uagents import Agent, Context, Protocol
-from uagents.setup import fund_agent_if_low
+# from uagents.setup import fund_agent_if_low
 from .models import DecisionRequest, DecisionResponse, Reasoning
 from .llm_client import SimpleLLMAgent
 
 
 class DecisionAgent(Agent):
-    def __init__(self):
-        super().__init__("decision_maker", 8006, "decision_seed")
-        fund_agent_if_low(self.wallet.address())
+    def __init__(self, port=8006):
+        super().__init__("decision_maker", port, "decision_seed")
+        # fund_agent_if_low(self.wallet.address())
 
         self.llm_agent = SimpleLLMAgent("decision_maker")
         self.protocol = Protocol()

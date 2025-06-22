@@ -6,16 +6,16 @@ This agent parses job descriptions using ASI:One LLM to extract key requirements
 """
 
 from uagents import Agent, Context, Protocol
-from uagents.setup import fund_agent_if_low
+# from uagents.setup import fund_agent_if_low  # Disabled to avoid network calls
 from .models import JobParseRequest, JobParseResponse
 from .llm_client import SimpleLLMAgent
 import json
 
 
 class JobParserAgent(Agent):
-    def __init__(self):
-        super().__init__("job_parser", 8001, "job_parser_seed")
-        fund_agent_if_low(self.wallet.address())
+    def __init__(self, port=8001):
+        super().__init__("job_parser", port, "job_parser_seed")
+        # fund_agent_if_low(self.wallet.address())  # Disabled for local operation
 
         self.llm_agent = SimpleLLMAgent("job_parser")
         self.protocol = Protocol()
