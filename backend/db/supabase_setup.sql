@@ -51,3 +51,47 @@ CREATE TRIGGER update_hiring_evaluations_updated_at
     BEFORE UPDATE ON hiring_evaluations 
     FOR EACH ROW 
     EXECUTE FUNCTION update_updated_at_column(); 
+
+-- Job Postings Table for Supabase
+-- This table stores job postings
+
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
+CREATE TABLE IF NOT EXISTS public.job_postings (
+    id uuid primary key default gen_random_uuid(),
+    title text not null,
+    description text,
+    skills text[], -- or use jsonb if you want more structure
+    location text,
+    employment_type text,
+    status text default 'ACTIVE' check (status in ('ACTIVE', 'INACTIVE')),
+    applicants_count integer default 0,
+    posted_at timestamp default now(),
+    updated_at timestamp default now()
+);
+
+-- Indexes for faster lookups
+CREATE INDEX IF NOT EXISTS idx_job_postings_title on job_postings(title);
+CREATE INDEX IF NOT EXISTS idx_job_postings_status on job_postings(status);
+CREATE INDEX IF NOT EXISTS idx_job_postings_posted_at on job_postings(posted_at);
+
+-- Enable Row Level Security (RLS)
+ALTER TABLE job_postings ENABLE ROW LEVEL SECURITY;
+
+-- Allow all operations (for dev, restrict as needed)
+CREATE POLICY "Allow all operations on job_postings" ON job_postings
+    FOR ALL USING (true);
+
+-- Auto-update updated_at on row update
+CREATE OR REPLACE FUNCTION update_job_postings_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ language 'plpgsql';
+
+CREATE TRIGGER update_job_postings_updated_at
+    BEFORE UPDATE ON job_postings
+    FOR EACH ROW
+    EXECUTE FUNCTION update_job_postings_updated_at(); 

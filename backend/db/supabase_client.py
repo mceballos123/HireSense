@@ -287,6 +287,77 @@ class HiringEvaluationsClient:
             "average_decision_confidence": None,  # Would need a more complex query
         }
 
+    # --- Job Postings Table Helpers ---
+
+    async def create_job_posting(
+        self,
+        title: str,
+        description: str = None,
+        skills: list = None,
+        location: str = None,
+        employment_type: str = None,
+        status: str = "ACTIVE",
+        applicants_count: int = 0,
+    ) -> dict:
+        """
+        Create a new job posting.
+        """
+        data = {
+            "title": title,
+            "description": description,
+            "skills": skills,
+            "location": location,
+            "employment_type": employment_type,
+            "status": status,
+            "applicants_count": applicants_count,
+        }
+        # Remove None values
+        data = {k: v for k, v in data.items() if v is not None}
+        response = self.client.table("job_postings").insert(data).execute()
+        if response.data:
+            return response.data[0]
+        else:
+            raise Exception("Failed to create job posting")
+
+    async def get_job_posting(self, job_id: str) -> dict:
+        """
+        Get a job posting by ID.
+        """
+        response = (
+            self.client.table("job_postings").select("*").eq("id", job_id).execute()
+        )
+        if response.data:
+            return response.data[0]
+        return None
+
+    async def list_job_postings(self, status: str = "ACTIVE", limit: int = 20) -> list:
+        """
+        List job postings, optionally filtered by status.
+        """
+        query = self.client.table("job_postings").select("*")
+        if status:
+            query = query.eq("status", status)
+        response = query.order("posted_at", desc=True).limit(limit).execute()
+        return response.data or []
+
+    async def update_job_posting(self, job_id: str, **kwargs) -> dict:
+        """
+        Update a job posting by ID.
+        """
+        response = (
+            self.client.table("job_postings").update(kwargs).eq("id", job_id).execute()
+        )
+        if response.data:
+            return response.data[0]
+        return None
+
+    async def delete_job_posting(self, job_id: str) -> bool:
+        """
+        Delete a job posting by ID.
+        """
+        response = self.client.table("job_postings").delete().eq("id", job_id).execute()
+        return len(response.data) > 0
+
 
 # Example usage
 if __name__ == "__main__":
@@ -320,6 +391,32 @@ if __name__ == "__main__":
         # Get statistics
         stats = await client.get_evaluation_stats()
         print(f"Statistics: {stats}")
+
+        # Create a job posting
+        job_posting = await client.create_job_posting(
+            title="Frontend Developer Intern",
+            description="Craft clean, responsive UIs for AI dashboards using React and collaborate with designers and engineers.",
+            skills=["React", "JavaScript", "Tailwind CSS", "UI/UX"],
+            location="Remote",
+            employment_type="Full-time",
+        )
+        print(f"Created job posting: {job_posting['id']}")
+
+        # List job postings
+        jobs = await client.list_job_postings()
+        print(f"List of job postings: {jobs}")
+
+        # Get a job posting by ID
+        job = await client.get_job_posting(job_id="...")
+        print(f"Retrieved job posting: {job}")
+
+        # Update a job posting
+        updated_job = await client.update_job_posting(job_id="...", status="INACTIVE")
+        print(f"Updated job posting: {updated_job}")
+
+        # Delete a job posting
+        deleted = await client.delete_job_posting(job_id="...")
+        print(f"Job posting deleted: {deleted}")
 
     # Uncomment to test
     # asyncio.run(test_client())
