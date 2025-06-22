@@ -35,68 +35,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { jobPosts } from "@/lib/script"
+import { jobPosts, detailedCandidates as applicants } from "@/lib/script"
 
 type JobPost = (typeof jobPosts)[number]
 type SortOption = "score-high" | "score-low" | "name" | "date-recent" | "date-old"
-
-const applicants = [
-  {
-    id: 1,
-    name: "Sarah Johnson",
-    position: "Senior Frontend Developer",
-    location: "San Francisco, CA",
-    experience: "5+ years",
-    skills: ["React", "TypeScript", "Next.js"],
-    status: "Under Review",
-    appliedDate: "2024-01-15",
-    score: 95
-  },
-  {
-    id: 2,
-    name: "Michael Chen",
-    position: "Backend Engineer",
-    location: "Seattle, WA",
-    experience: "4 years",
-    skills: ["Node.js", "Python", "AWS"],
-    status: "Interview Scheduled",
-    appliedDate: "2024-01-14",
-    score: 88
-  },
-  {
-    id: 3,
-    name: "Emily Rodriguez",
-    position: "Full Stack Developer",
-    location: "Austin, TX",
-    experience: "3 years",
-    skills: ["React", "Node.js", "MongoDB"],
-    status: "New",
-    appliedDate: "2024-01-16",
-    score: 82
-  },
-  {
-    id: 4,
-    name: "David Kim",
-    position: "Senior Frontend Developer",
-    location: "New York, NY",
-    experience: "6 years",
-    skills: ["Vue.js", "React", "GraphQL"],
-    status: "Under Review",
-    appliedDate: "2024-01-13",
-    score: 91
-  },
-  {
-    id: 5,
-    name: "Lisa Thompson",
-    position: "Backend Engineer",
-    location: "Denver, CO",
-    experience: "2 years",
-    skills: ["Python", "Django", "PostgreSQL"],
-    status: "New",
-    appliedDate: "2024-01-17",
-    score: 76
-  },
-]
 
 const dashboardStats = [
   {
@@ -181,9 +123,9 @@ export function DashboardContent() {
   const sortedApplicants = [...applicants].sort((a, b) => {
     switch (sortBy) {
       case "score-high":
-        return b.score - a.score
+        return b.overallScore - a.overallScore
       case "score-low":
-        return a.score - b.score
+        return a.overallScore - b.overallScore
       case "name":
         return a.name.localeCompare(b.name)
       case "date-recent":
@@ -207,12 +149,6 @@ export function DashboardContent() {
             Talent Intelligence
           </h1>
         </div>
-        <div className="ml-auto flex items-center gap-3">
-          <Badge className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white border-0 shadow-lg shadow-emerald-500/20">
-            <div className="mr-1 h-2 w-2 rounded-full bg-white animate-pulse" />
-            Live Data
-          </Badge>
-        </div>
       </header>
 
       <div className="flex-1 p-8 space-y-8">
@@ -222,11 +158,15 @@ export function DashboardContent() {
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-3xl font-bold text-slate-900 dark:text-white">Top Candidates</h2>
-                <p className="text-slate-600 dark:text-slate-400">AI-ranked applicants based on fit score</p>
+                <p className="text-slate-600 dark:text-slate-400">AI-ranked applicants for open positions</p>
               </div>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button className="gap-2 bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-700 hover:to-violet-700 text-white border-0 shadow-lg shadow-blue-500/25">
+                  <Button 
+                    variant="ghost"
+                    size="sm"
+                    className="gap-2 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400"
+                  >
                     {getSortLabel(sortBy)}
                     <ChevronDown className="h-4 w-4" />
                   </Button>
@@ -258,8 +198,8 @@ export function DashboardContent() {
                   <div className="absolute top-4 right-4">
                     <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-blue-50 to-violet-50 border border-blue-200/50 dark:from-blue-950/50 dark:to-violet-950/50 dark:border-blue-800/30">
                       <Zap className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
-                      <span className={`text-sm font-bold ${getScoreColor(applicant.score)}`}>
-                        {applicant.score}
+                      <span className={`text-sm font-bold ${getScoreColor(applicant.overallScore)}`}>
+                        {applicant.overallScore}
                       </span>
                     </div>
                   </div>
@@ -282,7 +222,7 @@ export function DashboardContent() {
                         </div>
                         <div className="flex items-center gap-2">
                           <Clock className="h-4 w-4" />
-                          <span>{applicant.experience}</span>
+                          <span>{applicant.experienceYears} years</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <Calendar className="h-4 w-4" />
@@ -293,8 +233,8 @@ export function DashboardContent() {
                       {/* Skills */}
                       <div className="flex items-center gap-2 flex-wrap">
                         {applicant.skills.slice(0, 4).map((skill) => (
-                          <Badge key={skill} className="bg-slate-100 text-slate-700 border border-slate-200 hover:bg-slate-200 transition-colors dark:bg-slate-700 dark:text-slate-300 dark:border-slate-600">
-                            {skill}
+                          <Badge key={skill.name} className="bg-slate-100 text-slate-700 border border-slate-200 hover:bg-slate-200 transition-colors dark:bg-slate-700 dark:text-slate-300 dark:border-slate-600">
+                            {skill.name}
                           </Badge>
                         ))}
                         {applicant.skills.length > 4 && (
@@ -434,8 +374,13 @@ export function DashboardContent() {
                           </div>
                         </div>
                         <Link href={`/job-posts/${job.id}`}>
-                          <Button className="bg-blue-600 hover:bg-blue-700 text-white border-0 shadow-lg px-6 py-2 text-sm font-semibold">
-                            View All Applicants
+                          <Button 
+                            variant="ghost"
+                            size="sm"
+                            className="hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 gap-2"
+                          >
+                            <span>View All Applicants</span>
+                            <ChevronRight className="h-4 w-4" />
                           </Button>
                         </Link>
                       </div>
