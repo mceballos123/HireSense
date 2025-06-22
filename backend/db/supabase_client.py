@@ -37,7 +37,7 @@ class HiringEvaluationsClient:
         self.client: Client = create_client(self.supabase_url, self.supabase_key)
 
     # ===== RESUME METHODS =====
-    
+
     async def create_resume(
         self,
         candidate_name: str,
@@ -73,7 +73,9 @@ class HiringEvaluationsClient:
             "skills": json.dumps(skills) if skills else None,
             "experience_years": experience_years,
             "experience_level": experience_level,
-            "key_achievements": json.dumps(key_achievements) if key_achievements else None,
+            "key_achievements": (
+                json.dumps(key_achievements) if key_achievements else None
+            ),
             "analysis_summary": analysis_summary,
         }
 
@@ -98,10 +100,7 @@ class HiringEvaluationsClient:
             Dictionary containing the resume record or None if not found
         """
         response = (
-            self.client.table("resumes")
-            .select("*")
-            .eq("id", resume_id)
-            .execute()
+            self.client.table("resumes").select("*").eq("id", resume_id).execute()
         )
 
         if response.data:
@@ -129,11 +128,11 @@ class HiringEvaluationsClient:
         return response.data or []
 
     async def search_resumes(
-        self, 
+        self,
         skills: Optional[List[str]] = None,
         experience_level: Optional[str] = None,
         min_years: Optional[int] = None,
-        limit: int = 50
+        limit: int = 50,
     ) -> List[Dict[str, Any]]:
         """
         Search resumes by criteria
@@ -148,32 +147,39 @@ class HiringEvaluationsClient:
             List of matching resume records
         """
         query = self.client.table("resumes").select("*")
-        
+
         if experience_level:
             query = query.eq("experience_level", experience_level)
-        
+
         if min_years:
             query = query.gte("experience_years", min_years)
-        
+
         # For skills, we'll need to use a more complex query
         # This is a simplified version - in production you might want full-text search
-        
+
         response = query.limit(limit).execute()
         results = response.data or []
-        
+
         # Filter by skills in Python (could be optimized with proper database queries)
         if skills:
             filtered_results = []
             for resume in results:
-                resume_skills = json.loads(resume.get("skills", "[]")) if resume.get("skills") else []
+                resume_skills = (
+                    json.loads(resume.get("skills", "[]"))
+                    if resume.get("skills")
+                    else []
+                )
                 resume_skills_lower = [skill.lower() for skill in resume_skills]
                 required_skills_lower = [skill.lower() for skill in skills]
-                
-                if any(req_skill in resume_skills_lower for req_skill in required_skills_lower):
+
+                if any(
+                    req_skill in resume_skills_lower
+                    for req_skill in required_skills_lower
+                ):
                     filtered_results.append(resume)
-            
+
             results = filtered_results
-        
+
         return results
 
     async def get_recent_resumes(self, limit: int = 10) -> List[Dict[str, Any]]:
@@ -459,10 +465,13 @@ class HiringEvaluationsClient:
     async def create_job_posting(
         self,
         title: str,
+        summary: str = None,
         description: str = None,
         skills: list = None,
         location: str = None,
         employment_type: str = None,
+        salary: str = None,
+        requirements: str = None,
         status: str = "ACTIVE",
         applicants_count: int = 0,
     ) -> dict:
@@ -471,14 +480,16 @@ class HiringEvaluationsClient:
         """
         data = {
             "title": title,
+            "summary": summary,
             "description": description,
             "skills": skills,
             "location": location,
             "employment_type": employment_type,
+            "salary": salary,
+            "requirements": requirements,
             "status": status,
             "applicants_count": applicants_count,
         }
-        # Remove None values
         data = {k: v for k, v in data.items() if v is not None}
         response = self.client.table("job_postings").insert(data).execute()
         if response.data:
@@ -563,10 +574,13 @@ if __name__ == "__main__":
         # Create a job posting
         job_posting = await client.create_job_posting(
             title="Frontend Developer Intern",
+            summary="Craft clean, responsive UIs for AI dashboards using React and collaborate with designers and engineers.",
             description="Craft clean, responsive UIs for AI dashboards using React and collaborate with designers and engineers.",
             skills=["React", "JavaScript", "Tailwind CSS", "UI/UX"],
             location="Remote",
             employment_type="Full-time",
+            salary="$30,000 - $40,000",
+            requirements="3+ years of experience in React development",
         )
         print(f"Created job posting: {job_posting['id']}")
 

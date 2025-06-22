@@ -107,7 +107,10 @@ CREATE TABLE IF NOT EXISTS public.job_postings (
     status text default 'ACTIVE' check (status in ('ACTIVE', 'INACTIVE')),
     applicants_count integer default 0,
     posted_at timestamp default now(),
-    updated_at timestamp default now()
+    updated_at timestamp default now(),
+    summary text,
+    salary text,
+    requirements text
 );
 
 -- Indexes for faster lookups
