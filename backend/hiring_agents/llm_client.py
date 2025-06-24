@@ -9,12 +9,16 @@ import aiohttp
 import ssl
 import json
 import re
+import os
 from typing import Dict
+from dotenv import load_dotenv
 
-# ASI:One API configuration
-ASI_API_KEY = "sk_d1a256183aa249f49f49d649dddff42ca039df035fb7404394efe289149d9997"
-ASI_API_URL = "https://api.asi1.ai/v1/chat/completions"
+# Load environment variables
+load_dotenv()
 
+# ASI:One API configuration from environment variables
+ASI_API_KEY = os.getenv("ASI_API_KEY")
+ASI_API_URL = os.getenv("ASI_API_URL")
 
 class SimpleLLMAgent:
     """Base class for LLM-powered agents"""
@@ -25,7 +29,7 @@ class SimpleLLMAgent:
         self.api_url = ASI_API_URL
 
     async def query_llm(self, prompt: str) -> dict:
-        """Query ASI1.ai API with a prompt and get response"""
+        """Query ASI:One API with a prompt and get response"""
         headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json",
@@ -37,7 +41,7 @@ class SimpleLLMAgent:
             "messages": [
                 {
                     "role": "system",
-                    "content": "You are a specialized AI agent for hiring analysis. Provide clear, structured responses.",
+                    "content": "You are a specialized AI agent for hiring analysis. Provide clear, structured responses in valid JSON format.",
                 },
                 {"role": "user", "content": prompt},
             ],
@@ -67,9 +71,7 @@ class SimpleLLMAgent:
                         }
                     else:
                         error_text = await response.text()
-                        print(
-                            f"❌ {self.name}: API Error {response.status}: {error_text}"
-                        )
+                        print(f"❌ {self.name}: API Error {response.status}: {error_text}")
                         return {
                             "success": False,
                             "content": f"API Error {response.status}: {error_text}",
