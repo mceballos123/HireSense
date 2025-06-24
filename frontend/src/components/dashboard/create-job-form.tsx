@@ -260,7 +260,7 @@ export function CreateJobForm({ open, onOpenChange, onJobCreated }: CreateJobFor
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-700 hover:to-violet-700 text-white border-0 shadow-lg shadow-blue-500/25"
+              className="bg-slate-900 text-white hover:bg-slate-700 dark:bg-slate-50 dark:text-slate-900 dark:hover:bg-slate-200"
             >
               {isSubmitting ? "Creating..." : "Create Job Post"}
             </Button>

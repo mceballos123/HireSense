@@ -88,6 +88,7 @@ export const jobPosts = [
 export const detailedCandidates = [
   {
     id: "cand-1",
+    jobId: 1,
     name: "Sarah Johnson",
     position: "Senior Frontend Developer",
     email: "sarah.johnson@example.com",
@@ -128,6 +129,7 @@ export const detailedCandidates = [
   },
   {
     id: "cand-2",
+    jobId: 1,
     name: "David Kim",
     position: "Senior Backend Engineer",
     email: "david.kim@example.com",
@@ -168,6 +170,7 @@ export const detailedCandidates = [
   },
   {
     id: "cand-3",
+    jobId: 1,
     name: "Michael Chen",
     position: "Backend Engineer",
     email: "michael.chen@example.com",
@@ -208,6 +211,7 @@ export const detailedCandidates = [
   },
   {
     id: "cand-4",
+    jobId: 1,
     name: "Emily Rodriguez",
     position: "Full Stack Developer",
     email: "emily.rodriguez@example.com",
@@ -248,6 +252,7 @@ export const detailedCandidates = [
   },
   {
     id: "cand-5",
+    jobId: 2,
     name: "Alex Williams",
     position: "AI/ML Engineer",
     email: "alex.williams@example.com",
@@ -288,6 +293,7 @@ export const detailedCandidates = [
   },
   {
     id: "cand-6",
+    jobId: 2,
     name: "Jessica Brown",
     position: "UI/UX Designer",
     email: "jessica.brown@example.com",
@@ -328,6 +334,7 @@ export const detailedCandidates = [
   },
   {
     id: "cand-7",
+    jobId: 2,
     name: "Chris Lee",
     position: "DevOps Engineer",
     email: "chris.lee@example.com",
@@ -368,6 +375,7 @@ export const detailedCandidates = [
   },
   {
     id: "cand-8",
+    jobId: 3,
     name: "Maria Garcia",
     position: "Product Manager",
     email: "maria.garcia@example.com",
@@ -408,6 +416,7 @@ export const detailedCandidates = [
   },
   {
     id: "cand-9",
+    jobId: 3,
     name: "Daniel Martinez",
     position: "Data Scientist",
     email: "daniel.martinez@example.com",
@@ -448,6 +457,7 @@ export const detailedCandidates = [
   },
   {
     id: "cand-10",
+    jobId: 2,
     name: "Olivia White",
     position: "Frontend Developer",
     email: "olivia.white@example.com",

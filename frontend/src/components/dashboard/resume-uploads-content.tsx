@@ -12,6 +12,21 @@ import { UploadResumeDialog } from "./upload-resume-dialog"
 import { AnalysisInProgress } from "./analysis-in-progress"
 import { RadialProgress } from "@/components/ui/radial-progress"
 
+interface DatabaseJobPost {
+  id: string
+  title: string
+  summary: string
+  description: string
+  location: string
+  employment_type: string
+  salary: string
+  requirements: string
+  skills: string[]
+  status: string
+  applicants_count: number
+  created_at: string
+}
+
 interface ResumeAnalysis {
   candidate_name: string
   skills: string[]
@@ -62,7 +77,53 @@ export function ResumeUploadsContent() {
   const [showTranscript, setShowTranscript] = useState(false)
   const [selectedJob, setSelectedJob] = useState<any | null>(null)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [databaseJobs, setDatabaseJobs] = useState<DatabaseJobPost[]>([])
+  const [isLoading, setIsLoading] = useState(true)
   const transcriptRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    fetchJobPosts()
+  }, [])
+
+  const fetchJobPosts = async () => {
+    try {
+      const response = await fetch('http://localhost:8000/job-postings')
+      if (response.ok) {
+        const data = await response.json()
+        setDatabaseJobs(data)
+      }
+    } catch (error) {
+      console.error('Error fetching job posts:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // Combine hardcoded and database job posts
+  const allJobPosts = [
+    ...jobPosts.map(job => ({
+      ...job,
+      employment_type: 'Full-time', // Add default employment type for hardcoded jobs
+      source: 'hardcoded' as const
+    })),
+    ...databaseJobs.map(job => ({
+      id: job.id,
+      title: job.title,
+      company: "Nebula Systems", // Default company for database jobs
+      location: job.location || "Remote",
+      posted: "Recently", // You could calculate this from created_at
+      applicants: job.applicants_count || 0,
+      status: job.status,
+      summary: job.summary || job.description?.substring(0, 150) + "...",
+      description: job.description,
+      responsibilities: job.requirements ? [job.requirements] : [],
+      qualifications: [],
+      bonus: [],
+      technologies: job.skills || [],
+      employment_type: job.employment_type || 'Full-time',
+      source: 'database' as const
+    }))
+  ]
 
   useEffect(() => {
     if (showTranscript && transcriptRef.current) {
@@ -133,7 +194,7 @@ export function ResumeUploadsContent() {
                 Analysis for {analysisResult.resume_analysis.candidate_name}
               </h1>
             </div>
-
+            
             {/* Final Decision Card */}
             <Card className="bg-gradient-to-br from-slate-50 to-white dark:from-slate-900 dark:to-slate-800/70 border-t-4 border-b-0 border-x-0 border-violet-500 shadow-xl">
               <CardHeader>
@@ -151,8 +212,8 @@ export function ResumeUploadsContent() {
                 </p>
                 <div className="max-w-3xl mx-auto text-left pt-4">
                   <p className="mt-1 text-slate-700 dark:text-slate-300 italic text-center">"{analysisResult.decision.reasoning.summary}"</p>
-                </div>
-                
+            </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto text-left pt-4">
                   <div className="space-y-2">
                     <h3 className="font-semibold text-lg text-emerald-600 dark:text-emerald-400">Pros</h3>
@@ -164,7 +225,7 @@ export function ResumeUploadsContent() {
                         </li>
                       ))}
                     </ul>
-                  </div>
+            </div>
                   <div className="space-y-2">
                     <h3 className="font-semibold text-lg text-red-600 dark:text-red-400">Cons</h3>
                      <ul className="space-y-2">
@@ -177,7 +238,7 @@ export function ResumeUploadsContent() {
                     </ul>
                   </div>
                 </div>
-
+                
                 <div className="max-w-3xl mx-auto text-left pt-4">
                   <Label className="font-semibold text-center block">Key Factors in Decision</Label>
                   <div className="mt-2 flex flex-wrap gap-2 justify-center">
@@ -204,24 +265,24 @@ export function ResumeUploadsContent() {
                    <div className="flex justify-between items-center">
                      <Label>Years of Experience</Label>
                      <Badge variant="outline">{analysisResult.resume_analysis.experience_years} years</Badge>
-                  </div>
-                  <div>
+              </div>
+              <div>
                     <Label className="mb-2 block">Technical Skills</Label>
                      <div className="flex flex-wrap gap-2">
                       {analysisResult.resume_analysis.skills.map((skill: string, index: number) => <Badge key={index}>{skill}</Badge>)}
-                     </div>
-                  </div>
-                  <div>
+                </div>
+              </div>
+              <div>
                      <Label className="mb-2 block">Key Achievements</Label>
                      <ul className="space-y-2">
                        {analysisResult.resume_analysis.key_achievements.map((ach, i) => (
                          <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
                            <CheckCircle className="h-4 w-4 mt-0.5 text-emerald-500 shrink-0"/>
                            <span>{ach}</span>
-                         </li>
-                       ))}
-                     </ul>
-                  </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
                 </CardContent>
               </Card>
               
@@ -241,7 +302,7 @@ export function ResumeUploadsContent() {
                       {analysisResult.intersection_analysis.skill_matches.map((skill: string, index: number) => <Badge key={index} className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300">{skill}</Badge>)}
                      </div>
                   </div>
-                   <div>
+              <div>
                     <Label className="mb-2 block">Skill Gaps</Label>
                      <div className="flex flex-wrap gap-2">
                       {analysisResult.intersection_analysis.skill_gaps.map((skill: string, index: number) => <Badge key={index} variant="destructive">{skill}</Badge>)}
@@ -260,7 +321,7 @@ export function ResumeUploadsContent() {
               <Button variant="secondary" onClick={() => setShowTranscript(!showTranscript)}>
                 {showTranscript ? "Hide" : "Show"} Full Evaluation Transcript
               </Button>
-            </div>
+              </div>
 
             {showTranscript && (
               <Card className="shadow-lg" ref={transcriptRef}>
@@ -334,7 +395,7 @@ export function ResumeUploadsContent() {
               <h2 className="text-xl font-semibold">Select a Job Post</h2>
               <p className="text-muted-foreground">Choose a job to upload a candidate's resume for analysis.</p>
             </div>
-            {jobPosts.map((job) => (
+            {allJobPosts.map((job) => (
               <Card key={job.id} className="group relative overflow-hidden border border-slate-200/60 bg-white/90 backdrop-blur-sm shadow-sm hover:shadow-lg hover:border-blue-300/60 transition-all duration-300 hover:-translate-y-0.5 dark:bg-slate-800/90 dark:border-slate-700/60 dark:hover:border-blue-600/60">
                 <CardHeader className="pb-4">
                   <div className="flex items-start justify-between">
@@ -345,7 +406,7 @@ export function ResumeUploadsContent() {
                       <div className="flex items-center gap-4 text-sm text-slate-500 dark:text-slate-400">
                         <div className="flex items-center gap-1">
                           <MapPin className="h-4 w-4" />
-                          <span>Remote • Full-time</span>
+                          <span>{job.location} • {job.employment_type || 'Full-time'}</span>
                         </div>
                         <div className="flex items-center gap-1">
                           <Calendar className="h-4 w-4" />
@@ -353,24 +414,32 @@ export function ResumeUploadsContent() {
                         </div>
                       </div>
                     </div>
-                    <Badge className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white border-0 shadow-md shadow-emerald-500/20">
-                      {job.status}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge className="uppercase bg-gradient-to-r from-emerald-500 to-teal-500 text-white border-0 shadow-md shadow-emerald-500/20">
+                        {job.status}
+                      </Badge>
+                      {job.source === 'database' && (
+                        <Badge variant="outline" className="uppercase border-blue-300 text-blue-600 dark:border-blue-600 dark:text-blue-400">
+                          New
+                        </Badge>
+                      )}
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center justify-end">
                     <Button 
                       size="sm" 
+                      variant="ghost"
                       onClick={() => handleUploadClick(job)}
-                      className="gap-2 bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-700 hover:to-violet-700 text-white border-0 shadow-md"
+                      className="gap-2 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400"
                     >
                       <Upload className="h-4 w-4" />
                       Upload for this Job
                     </Button>
-                  </div>
-                </CardContent>
-              </Card>
+                </div>
+            </CardContent>
+          </Card>
             ))}
           </div>
         )}

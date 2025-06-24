@@ -18,7 +18,9 @@ import {
   MapPin,
   Calendar,
   Clock,
-  BrainCircuit
+  BrainCircuit,
+  Zap,
+  Briefcase
 } from "lucide-react"
 import Link from "next/link"
 
@@ -28,7 +30,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Separator } from "@/components/ui/separator"
 import { Label } from "@/components/ui/label"
-import { detailedCandidates } from "@/lib/script";
+import { detailedCandidates, jobPosts } from "@/lib/script";
 
 // Mock detailed applicant data
 const getApplicantData = (id: string) => {
@@ -43,6 +45,9 @@ export function ApplicantAnalysis({ applicantId }: ApplicantAnalysisProps) {
   const [showTranscript, setShowTranscript] = useState(false)
   const transcriptRef = useRef<HTMLDivElement>(null)
   const applicant = getApplicantData(applicantId)
+  const job = applicant
+    ? jobPosts.find(j => j.id === (applicant as any).jobId)
+    : null
 
   useEffect(() => {
     if (showTranscript && transcriptRef.current) {
@@ -96,24 +101,22 @@ export function ApplicantAnalysis({ applicantId }: ApplicantAnalysisProps) {
   return (
     <div className="flex flex-1 flex-col bg-gradient-to-br from-slate-50 via-white to-blue-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-blue-950/20">
       <header className="flex h-20 items-center gap-3 border-b border-white/20 bg-white/70 backdrop-blur-xl px-8 shadow-sm dark:bg-slate-900/70 dark:border-slate-800/50">
-        <Link href="/">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="gap-2 hover:bg-slate-100 dark:hover:bg-slate-800"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to Dashboard
-          </Button>
-        </Link>
-        <Separator orientation="vertical" className="h-6" />
         <div className="flex items-center gap-3">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-violet-600">
-            <Sparkles className="h-4 w-4 text-white" />
+            <User className="h-4 w-4 text-white" />
           </div>
-          <h1 className="text-xl font-bold bg-gradient-to-r from-slate-900 via-blue-800 to-violet-800 bg-clip-text text-transparent dark:from-white dark:via-blue-200 dark:to-violet-200">
-            Applicant Analysis
+          <h1 className="text-2xl font-bold bg-gradient-to-r from-slate-900 via-blue-800 to-violet-800 bg-clip-text text-transparent dark:from-white dark:via-blue-200 dark:to-violet-200">
+            {applicant.name}
           </h1>
+        </div>
+        <Separator orientation="vertical" className="h-6" />
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-blue-50 to-violet-50 border border-blue-200/50 dark:from-blue-950/50 dark:to-violet-950/50 dark:border-blue-800/30">
+            <Zap className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+            <span className={`text-sm font-bold ${getScoreColor(applicant.overallScore)}`}>
+              {applicant.overallScore}
+            </span>
+          </div>
         </div>
         <div className="ml-auto flex gap-3">
           <Button
@@ -126,7 +129,7 @@ export function ApplicantAnalysis({ applicantId }: ApplicantAnalysisProps) {
           </Button>
           <Button
             size="sm"
-            className="gap-2 bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-700 hover:to-violet-700 text-white border-0 shadow-lg shadow-blue-500/25"
+            className="gap-2 bg-slate-900 text-white hover:bg-slate-700 dark:bg-slate-50 dark:text-slate-900 dark:hover:bg-slate-200"
           >
             <Mail className="h-4 w-4" />
             Contact
@@ -140,6 +143,14 @@ export function ApplicantAnalysis({ applicantId }: ApplicantAnalysisProps) {
           <h1 className="text-3xl font-bold bg-gradient-to-r from-slate-800 via-blue-700 to-violet-700 bg-clip-text text-transparent dark:from-white dark:via-blue-300 dark:to-violet-300">
             Analysis for {applicant.name}
           </h1>
+          {job && (
+            <p className="mt-2 text-lg text-slate-600 dark:text-slate-400">
+              Applied for:{" "}
+              <span className="font-semibold text-slate-700 dark:text-slate-300">
+                {job.title}
+              </span>
+            </p>
+          )}
         </div>
 
         {/* Final Decision Card */}

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Plus, Users, Calendar, MapPin, Briefcase, Trash2 } from "lucide-react"
+import { Plus, Users, Calendar, MapPin, Briefcase, Trash2, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
@@ -116,7 +116,7 @@ export function JobPostsContent() {
         <div className="ml-auto">
           <Button 
             onClick={() => setCreateJobOpen(true)}
-            className="gap-2 bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-700 hover:to-violet-700 text-white border-0 shadow-lg shadow-blue-500/25"
+            className="gap-2 bg-slate-900 text-white hover:bg-slate-700 dark:bg-slate-50 dark:text-slate-900 dark:hover:bg-slate-200"
           >
             <Plus className="h-4 w-4" />
             New Job Post
@@ -149,11 +149,11 @@ export function JobPostsContent() {
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
-                        <Badge className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white border-0 shadow-lg shadow-emerald-500/20">
+                        <Badge className="uppercase bg-gradient-to-r from-emerald-500 to-teal-500 text-white border-0 shadow-lg shadow-emerald-500/20">
                           {job.status}
                         </Badge>
                         {job.source === 'database' && (
-                          <Badge variant="outline" className="border-blue-300 text-blue-600 dark:border-blue-600 dark:text-blue-400">
+                          <Badge variant="outline" className="uppercase border-blue-300 text-blue-600 dark:border-blue-600 dark:text-blue-400">
                             New
                           </Badge>
                         )}
@@ -189,8 +189,13 @@ export function JobPostsContent() {
                         <MapPin className="h-4 w-4" />
                         <span>{job.location} • {job.employment_type || 'Full-time'}</span>
                       </div>
-                      <Button size="sm" className="bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-700 hover:to-violet-700 text-white border-0 shadow-sm opacity-0 group-hover:opacity-100 transition-all duration-300">
-                        View Details
+                      <Button 
+                        size="sm" 
+                        variant="ghost"
+                        className="opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 gap-2"
+                      >
+                        <span>View Details</span>
+                        <ChevronRight className="h-4 w-4" />
                       </Button>
                     </div>
                   </CardContent>
