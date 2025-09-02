@@ -54,6 +54,10 @@ async def upload_resume(
     """
     try:
         # Validate file type
+        print(f"📤 Processing resume for {candidate_name}")
+        print(f"📄 File: {file.filename}")
+        print(f"📄 Job Title: {job_title}")
+        print(f"📄 Candidate Name: {candidate_name}")
         if not file.filename:
             raise HTTPException(status_code=400, detail="No file provided")
         

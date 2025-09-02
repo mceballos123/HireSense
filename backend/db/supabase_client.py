@@ -5,9 +5,10 @@ Supabase Client for Hiring Evaluations
 This module provides a client to interact with the resumes and hiring_evaluations tables in Supabase.
 """
 
-SUPABASE_URL = "https://tceiqtjpxoqeaykptdrj.supabase.co"
-SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRjZWlxdGpweG9xZWF5a3B0ZHJqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA1NTkwMDYsImV4cCI6MjA2NjEzNTAwNn0.7UNQCNuPagUG8Q0CJ9U0woUTamJu3B3PwM2JEuUBpfE"
 
+
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 import os
 from typing import Dict, List, Optional, Any
 from supabase import create_client, Client
