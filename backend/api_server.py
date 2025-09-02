@@ -1,4 +1,12 @@
-from fastapi import FastAPI, File, UploadFile, Form, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import (
+    FastAPI,
+    File,
+    UploadFile,
+    Form,
+    HTTPException,
+    WebSocket,
+    WebSocketDisconnect,
+)
 from fastapi.middleware.cors import CORSMiddleware
 import asyncio
 import json
@@ -22,6 +30,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 # Global WebSocket connections manager
 class ConnectionManager:
     def __init__(self):
@@ -42,14 +51,24 @@ class ConnectionManager:
             except:
                 # Mark dead connections for removal
                 dead_connections.append(connection)
-        
+
         # Remove dead connections
         for connection in dead_connections:
             if connection in self.active_connections:
                 self.active_connections.remove(connection)
 
+
 manager = ConnectionManager()
 
+
+@app.get("/test")
+async def test_endpoint():
+    """Simple test endpoint to verify server is working"""
+    print("🧪 TEST ENDPOINT HIT!")
+    return {
+        "status": "Server is working!",
+        "message": "API server is running correctly",
+    }
 
 
 @app.websocket("/ws/progress")
@@ -62,57 +81,85 @@ async def websocket_endpoint(websocket: WebSocket):
     except WebSocketDisconnect:
         manager.disconnect(websocket)
 
+
 @app.post("/evaluate-candidate")
 async def evaluate_candidate(
     candidate_name: str = Form(...),
     job_title: str = Form(...),
     job_description: str = Form(...),
-    resume_file: UploadFile = File(...)
+    resume_file: UploadFile = File(...),
 ):
     """Evaluate a candidate using the hiring agent system"""
+    print("=" * 60)
+    print("🚨 EVALUATE-CANDIDATE ENDPOINT HIT!")
+    print("=" * 60)
     try:
-        print("📄 Parsing PDF file...")
-        
+        print(f"📄 Received request for candidate: {candidate_name}")
+        print(f"📄 Job title: {job_title}")
+        print(f"📄 Parsing PDF file: {resume_file.filename}")
+
         # Parse the uploaded PDF
-        pdf_parser = PDFParser()
-        resume_content = pdf_parser.extract_text_from_pdf(await resume_file.read())
-        
+        resume_content = PDFParser.extract_text_from_pdf(await resume_file.read())
+
+        if not resume_content or len(resume_content.strip()) < 10:
+            raise HTTPException(
+                status_code=400,
+                detail="Could not extract text from PDF or file is too short",
+            )
+
+        print(f"📄 Successfully extracted {len(resume_content)} characters from PDF")
+
         print("🚀 Kicking off the hiring agent pipeline and awaiting results...")
-        
+
+        # Send initial connection event
+        await manager.send_message(
+            {
+                "type": "agent_message",
+                "agent_name": "System",
+                "message": "Starting hiring evaluation process...",
+                "step": "initialization",
+                "position": "info",
+                "timestamp": time.time(),
+            }
+        )
+
         # Create event emitter for this request
-        async def emit_event(agent_name: str, message: str, step: str, position: str = "info"):
+        async def emit_event(
+            agent_name: str, message: str, step: str, position: str = "info"
+        ):
             event = {
                 "type": "agent_message",
                 "agent_name": agent_name,
                 "message": message,
                 "step": step,
                 "position": position,
-                "timestamp": time.time()
+                "timestamp": time.time(),
             }
             await manager.send_message(event)
-        
+            print(f"📡 Sent WebSocket event: {agent_name} - {message[:50]}...")
+
         # Run the hiring system with fresh agents
         result = await run_hiring_system(
             resume_content=resume_content,
             job_description=job_description,
             candidate_name=candidate_name,
             job_title=job_title,
-            event_emitter=emit_event
+            event_emitter=emit_event,
         )
-        
+
         if result:
             # Send completion event
             await emit_event("System", "Analysis completed successfully!", "completed")
             # Return the result directly (not wrapped) to match frontend expectations
             return result.model_dump()
         else:
-            # Send error event  
+            # Send error event
             await emit_event("System", "Analysis failed to complete", "error")
             return {
                 "status": "error",
-                "message": "Failed to complete candidate evaluation"
+                "message": "Failed to complete candidate evaluation",
             }
-            
+
     except Exception as e:
         print(f"❌ Error in evaluation: {str(e)}")
         # Send error event
@@ -120,12 +167,13 @@ async def evaluate_candidate(
             await emit_event("System", f"Error: {str(e)}", "error")
         except:
             pass  # Don't fail if event emission fails
-        
-        return {
-            "status": "error", 
-            "message": f"Error during evaluation: {str(e)}"
-        }
+
+        return {"status": "error", "message": f"Error during evaluation: {str(e)}"}
+
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8080) 
+
+    # Use different port to avoid conflicts
+    print("🚀 Starting HireSense API Server on port 8081...")
+    uvicorn.run(app, host="0.0.0.0", port=8081)

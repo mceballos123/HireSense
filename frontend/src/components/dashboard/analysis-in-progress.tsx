@@ -30,7 +30,7 @@ export function AnalysisInProgress() {
   useEffect(() => {
     // Try to connect to WebSocket, with fallback for different ports
     const connectWebSocket = () => {
-      const ws = new WebSocket('ws://localhost:8080/ws/progress')
+      const ws = new WebSocket('ws://localhost:8081/ws/progress')
       
       ws.onopen = () => {
         setIsConnected(true)

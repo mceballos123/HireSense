@@ -90,7 +90,7 @@ export function UploadResumeDialog({
       formData.append("job_title", job.title)
       formData.append("job_description", job.description || job.summary)
 
-      const response = await fetch("http://localhost:8080/evaluate-candidate", {
+      const response = await fetch("http://localhost:8081/evaluate-candidate", {
         method: "POST",
         body: formData,
       })
