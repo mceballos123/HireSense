@@ -1,0 +1,51 @@
+
+services:
+  # Service 1: The main hiring system API (AI agents)
+  hiring-api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.agents # Corrected filename
+    ports:
+      - "8081:8081"
+    environment:
+      - ASI_API_KEY=${ASI_API_KEY}
+      - ASI_API_URL=${ASI_API_URL}
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_KEY=${SUPABASE_KEY}
+    volumes:
+      - ./backend:/app
+    restart: unless-stopped
+
+  # Service 2: The job postings CRUD API
+  job-api:
+    build:
+      context: ./backend
+      dockerfile: DockerFile.jobapi # This filename is correct
+    ports:
+      - "8000:8000"
+    environment:
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_KEY=${SUPABASE_KEY}
+    volumes:
+      - ./backend:/app
+    restart: unless-stopped
+
+  # Service 3: The Next.js frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.frontend # Corrected filename
+    ports:
+      - "3001:3000"
+    environment:
+      - NEXT_PUBLIC_HIRING_API_URL=http://localhost:8081
+      - NEXT_PUBLIC_JOB_API_URL=http://localhost:8000
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - hiring-api
+      - job-api
+    restart: unless-stopped
+      
+      
