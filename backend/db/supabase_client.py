@@ -10,12 +10,14 @@ from typing import Dict, List, Optional, Any
 from supabase import create_client, Client
 from datetime import datetime
 
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_KEY")
-import json
 
+
+SUPABASE_URL=os.getenv("SUPABASE_URL")
+SUPABASE_KEY=os.getenv("SUPABASE_KEY")
 
 class HiringEvaluationsClient:
+
+
     """Client for managing resumes and hiring evaluations in Supabase"""
 
     def __init__(self, supabase_url: str = None, supabase_key: str = None):

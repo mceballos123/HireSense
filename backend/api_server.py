@@ -14,6 +14,7 @@ from typing import List
 from main import run_hiring_system
 from hiring_agents.pdf_parser import PDFParser
 import time
+from websockets.exceptions import ConnectionClosedError
 
 app = FastAPI(
     title="Hiring Agent System API",
@@ -44,18 +45,30 @@ class ConnectionManager:
         self.active_connections.remove(websocket)
 
     async def send_message(self, message: dict):
+        if not self.active_connections:
+            return  # No connections to send to
+
         dead_connections = []
-        for connection in self.active_connections:
+        for connection in self.active_connections[
+            :
+        ]:  # Use slice to avoid modification during iteration
             try:
                 await connection.send_text(json.dumps(message))
-            except:
+            except asyncio.CancelledError:
+                # Connection cancelled - mark for removal but don't re-raise
+                dead_connections.append(connection)
+            except (ConnectionClosedError, Exception) as e:
                 # Mark dead connections for removal
                 dead_connections.append(connection)
+                print(f"🔌 WebSocket connection closed or failed: {type(e).__name__}")
 
-        # Remove dead connections
+        # Remove dead connections safely
         for connection in dead_connections:
-            if connection in self.active_connections:
-                self.active_connections.remove(connection)
+            try:
+                if connection in self.active_connections:
+                    self.active_connections.remove(connection)
+            except:
+                pass  # Ignore removal errors
 
 
 manager = ConnectionManager()
@@ -76,10 +89,27 @@ async def websocket_endpoint(websocket: WebSocket):
     await manager.connect(websocket)
     try:
         while True:
-            # Keep connection alive
-            await websocket.receive_text()
+            # Keep connection alive but handle cancellation gracefully
+            try:
+                await websocket.receive_text()
+            except asyncio.CancelledError:
+                # WebSocket was cancelled, exit gracefully
+                break
+            except ConnectionClosedError:
+                # Client disconnected
+                break
     except WebSocketDisconnect:
-        manager.disconnect(websocket)
+        pass  # Normal disconnection
+    except asyncio.CancelledError:
+        # Handle server shutdown gracefully
+        pass
+    except Exception as e:
+        print(f"WebSocket error: {e}")
+    finally:
+        try:
+            manager.disconnect(websocket)
+        except:
+            pass  # Ignore cleanup errors
 
 
 @app.post("/evaluate-candidate")
@@ -139,27 +169,45 @@ async def evaluate_candidate(
             print(f"📡 Sent WebSocket event: {agent_name} - {message[:50]}...")
 
         # Run the hiring system with fresh agents
-        result = await run_hiring_system(
-            resume_content=resume_content,
-            job_description=job_description,
-            candidate_name=candidate_name,
-            job_title=job_title,
-            event_emitter=emit_event,
-        )
+        try:
+            result = await run_hiring_system(
+                resume_content=resume_content,
+                job_description=job_description,
+                candidate_name=candidate_name,
+                job_title=job_title,
+                event_emitter=emit_event,
+            )
 
-        if result:
-            # Send completion event
-            await emit_event("System", "Analysis completed successfully!", "completed")
-            # Return the result directly (not wrapped) to match frontend expectations
-            return result.model_dump()
-        else:
-            # Send error event
-            await emit_event("System", "Analysis failed to complete", "error")
+            if result:
+                # Send completion event
+                await emit_event(
+                    "System", "Analysis completed successfully!", "completed"
+                )
+                # Return the result directly (not wrapped) to match frontend expectations
+                return result.model_dump()
+            else:
+                # Send error event
+                await emit_event("System", "Analysis failed to complete", "error")
+                return {
+                    "status": "error",
+                    "message": "Failed to complete candidate evaluation",
+                }
+        except asyncio.CancelledError:
+            # Handle asyncio cancellation gracefully - shield should prevent this
+            print("⚠️ Hiring system execution was cancelled despite shield")
+            try:
+                await emit_event("System", "Analysis was cancelled", "error")
+            except:
+                pass
             return {
                 "status": "error",
-                "message": "Failed to complete candidate evaluation",
+                "message": "Analysis was cancelled or interrupted",
             }
 
+    except asyncio.CancelledError:
+        # Handle top-level cancellation
+        print("⚠️ Request was cancelled")
+        return {"status": "error", "message": "Request was cancelled"}
     except Exception as e:
         print(f"❌ Error in evaluation: {str(e)}")
         # Send error event
@@ -174,6 +222,22 @@ async def evaluate_candidate(
 if __name__ == "__main__":
     import uvicorn
 
-    # Use different port to avoid conflicts
     print("🚀 Starting HireSense API Server on port 8081...")
-    uvicorn.run(app, host="0.0.0.0", port=8081)
+    print("   The server will continue running after each hiring evaluation")
+    print("   Press Ctrl+C to stop the server")
+    print()
+
+    try:
+        # Use simple uvicorn run - no complex restart logic
+        uvicorn.run(
+            app,
+            host="0.0.0.0",
+            port=8081,
+            log_level="info",
+            access_log=False,
+            reload=False,  # Don't use reload to avoid complications
+        )
+    except KeyboardInterrupt:
+        print("\n🛑 Server stopped by user")
+    except Exception as e:
+        print(f"❌ Server error: {e}")
