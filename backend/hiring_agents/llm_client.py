@@ -17,8 +17,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # ASI:One API configuration from environment variables
-ASI_API_KEY = os.getenv("ASI_API_KEY") #Uncomment this aftyer I run it successfully
 ASI_API_URL = os.getenv("ASI_API_URL")
+ASI_API_KEY = os.getenv("ASI_API_KEY")
 
 
 class SimpleLLMAgent:
@@ -72,7 +72,9 @@ class SimpleLLMAgent:
                         }
                     else:
                         error_text = await response.text()
-                        print(f"❌ {self.name}: API Error {response.status}: {error_text}")
+                        print(
+                            f"❌ {self.name}: API Error {response.status}: {error_text}"
+                        )
                         return {
                             "success": False,
                             "content": f"API Error {response.status}: {error_text}",
@@ -93,4 +95,3 @@ class SimpleLLMAgent:
         except (json.JSONDecodeError, KeyError) as e:
             print(f"❌ {self.name}: JSON parsing error: {e}")
             return {}
-
