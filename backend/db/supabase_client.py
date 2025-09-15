@@ -14,6 +14,7 @@ from datetime import datetime
 
 SUPABASE_URL=os.getenv("SUPABASE_URL")
 SUPABASE_KEY=os.getenv("SUPABASE_KEY")
+# For testing purposes
 
 class HiringEvaluationsClient:
 
@@ -30,11 +31,12 @@ class HiringEvaluationsClient:
         """
         self.supabase_url = supabase_url or SUPABASE_URL
         self.supabase_key = supabase_key or SUPABASE_KEY
-
+        
         if not self.supabase_url or not self.supabase_key:
             raise ValueError(
                 "Supabase URL and key must be provided or set as environment variables"
             )
+
 
         self.client: Client = create_client(self.supabase_url, self.supabase_key)
 

@@ -13,6 +13,7 @@ import json
 from typing import List
 from main import run_hiring_system
 from hiring_agents.pdf_parser import PDFParser
+from hiring_agents.resume_improvement_agent import ResumeImprovementAgent
 import time
 from websockets.exceptions import ConnectionClosedError
 
@@ -33,6 +34,7 @@ app.add_middleware(
 
 
 # Global WebSocket connections manager
+# Sends real time updates, while waiting for the result for the hrigin agents systems
 class ConnectionManager:
     def __init__(self):
         self.active_connections: List[WebSocket] = []
@@ -71,6 +73,7 @@ class ConnectionManager:
                 pass  # Ignore removal errors
 
 
+# variable with all the websocket connections
 manager = ConnectionManager()
 
 
@@ -86,17 +89,21 @@ async def test_endpoint():
 
 @app.websocket("/ws/progress")
 async def websocket_endpoint(websocket: WebSocket):
+    # wait for the websocket to connect
     await manager.connect(websocket)
     try:
         while True:
             # Keep connection alive but handle cancellation gracefully
             try:
+                ## recieves the text from the server and client connection via the websocket
                 await websocket.receive_text()
             except asyncio.CancelledError:
+                # This is when the client closes the connection
                 # WebSocket was cancelled, exit gracefully
                 break
             except ConnectionClosedError:
                 # Client disconnected
+                # This is when the client closes the connection
                 break
     except WebSocketDisconnect:
         pass  # Normal disconnection
@@ -141,7 +148,7 @@ async def evaluate_candidate(
 
         print("🚀 Kicking off the hiring agent pipeline and awaiting results...")
 
-        # Send initial connection event
+        # Send initial connection event, this is the first message, send out to the client from the server via the websocket
         await manager.send_message(
             {
                 "type": "agent_message",
@@ -165,6 +172,7 @@ async def evaluate_candidate(
                 "position": position,
                 "timestamp": time.time(),
             }
+            # send the event to the client via the websocket
             await manager.send_message(event)
             print(f"📡 Sent WebSocket event: {agent_name} - {message[:50]}...")
 
@@ -217,6 +225,65 @@ async def evaluate_candidate(
             pass  # Don't fail if event emission fails
 
         return {"status": "error", "message": f"Error during evaluation: {str(e)}"}
+
+
+@app.post("/analyze-resume-for-improvement")
+async def analyze_resume_for_improvement(
+    #form data
+    candidate_name: str = Form(...),
+    field_of_interest: str = Form(...),
+    major: str = Form(...),
+    resume_file: UploadFile = File(...),
+):
+    """Analyze a student's resume and provide improvement recommendations (Use Case 1)"""
+    print("=" * 60)
+    print("🎓 ANALYZE-RESUME-FOR-IMPROVEMENT ENDPOINT HIT!")
+    print("=" * 60)
+    try:
+        print(f"📄 Received request for student: {candidate_name}")
+        print(f"📄 Field of interest: {field_of_interest}")
+        print(f"📄 Major: {major}")
+        print(f"📄 Parsing PDF file: {resume_file.filename}")
+
+        # Parse the uploaded PDF
+        resume_content = PDFParser.extract_text_from_pdf(await resume_file.read())
+
+        if not resume_content or len(resume_content.strip()) < 10:
+            raise HTTPException(
+                status_code=400,
+                detail="Could not extract text from PDF or file is too short",
+            )
+
+        print(f"📄 Successfully extracted {len(resume_content)} characters from PDF")
+
+        # Initialize the resume improvement agent
+        improvement_agent = ResumeImprovementAgent()
+
+        print("🎓 Starting resume improvement analysis...")
+
+        # Analyze the resume for educational feedback
+        result = await improvement_agent.analyze_resume_for_improvement(
+            resume_content=resume_content,
+            candidate_name=candidate_name,
+            field_of_interest=field_of_interest,
+            major=major,
+        )
+
+        if result:
+            print("✅ Resume improvement analysis completed successfully")
+            return result
+        else:
+            return {
+                "status": "error",
+                "message": "Failed to complete resume analysis",
+            }
+
+    except HTTPException:
+        # Re-raise HTTP exceptions
+        raise
+    except Exception as e:
+        print(f"❌ Error in resume improvement analysis: {str(e)}")
+        return {"status": "error", "message": f"Error during analysis: {str(e)}"}
 
 
 if __name__ == "__main__":
