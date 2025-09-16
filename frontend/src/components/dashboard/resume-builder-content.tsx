@@ -31,51 +31,6 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { AnalysisInProgress } from "./analysis-in-progress"
 
-// Field definitions with icons and descriptions - Top 5 most in-demand fields per discipline
-const ENGINEERING_FIELDS = {
-  "Computer Science": [
-    { id: "frontend", name: "Frontend Development", icon: Globe, description: "React, Vue, Angular, HTML/CSS, UI/UX" },
-    { id: "backend", name: "Backend Development", icon: Database, description: "APIs, Databases, Server-side logic, Cloud" },
-    { id: "fullstack", name: "Full Stack Development", icon: Code, description: "Frontend + Backend development" },
-    { id: "devops", name: "DevOps Engineering", icon: Cloud, description: "CI/CD, Docker, Kubernetes, AWS, Infrastructure" },
-    { id: "data-science", name: "Data Science & AI", icon: BarChart3, description: "Python, ML, Analytics, AI, Deep Learning" }
-  ],
-  "Electrical Engineering": [
-    { id: "embedded", name: "Embedded Systems", icon: Cpu, description: "Microcontrollers, IoT, Firmware, RTOS" },
-    { id: "power-systems", name: "Power & Energy Systems", icon: BarChart3, description: "Smart grids, Renewable energy, Power electronics" },
-    { id: "signal-processing", name: "Signal Processing & Communications", icon: Database, description: "DSP, 5G/6G, Wireless communications" },
-    { id: "control-systems", name: "Control & Automation", icon: Target, description: "Industrial automation, Robotics, PLC" },
-    { id: "vlsi", name: "VLSI & Semiconductor Design", icon: Cpu, description: "Chip design, IC design, Hardware verification" }
-  ],
-  "Mechanical Engineering": [
-    { id: "robotics", name: "Robotics & Automation", icon: Cpu, description: "Industrial robots, AI integration, Control systems" },
-    { id: "automotive", name: "Automotive Engineering", icon: Globe, description: "Electric vehicles, Autonomous systems, Testing" },
-    { id: "aerospace", name: "Aerospace Engineering", icon: Target, description: "Aircraft design, Space systems, Propulsion" },
-    { id: "manufacturing", name: "Manufacturing & Production", icon: TrendingUp, description: "Lean manufacturing, Quality control, Process optimization" },
-    { id: "thermal-fluids", name: "Thermal & Fluid Systems", icon: Database, description: "HVAC, Energy systems, CFD analysis" }
-  ],
-  "Civil Engineering": [
-    { id: "structural", name: "Structural Engineering", icon: Target, description: "Building design, Earthquake engineering, Steel/Concrete" },
-    { id: "transportation", name: "Transportation Engineering", icon: Globe, description: "Highway design, Traffic engineering, Smart infrastructure" },
-    { id: "environmental", name: "Environmental Engineering", icon: Database, description: "Water treatment, Sustainability, Green infrastructure" },
-    { id: "geotechnical", name: "Geotechnical Engineering", icon: TrendingUp, description: "Foundation design, Soil mechanics, Slope stability" },
-    { id: "construction", name: "Construction Management", icon: Cpu, description: "Project management, BIM, Construction technology" }
-  ],
-  "Chemical Engineering": [
-    { id: "process-engineering", name: "Process Engineering", icon: Database, description: "Chemical processes, Plant design, Process optimization" },
-    { id: "biotechnology", name: "Biotechnology", icon: BarChart3, description: "Bioprocessing, Pharmaceuticals, Biomedical engineering" },
-    { id: "materials", name: "Materials Engineering", icon: Cpu, description: "Nanomaterials, Polymers, Advanced materials" },
-    { id: "environmental-chemical", name: "Environmental & Sustainability", icon: Globe, description: "Green chemistry, Waste treatment, Carbon capture" },
-    { id: "energy-chemical", name: "Energy Systems", icon: TrendingUp, description: "Renewable energy, Battery technology, Fuel cells" }
-  ],
-  "Industrial Engineering": [
-    { id: "data-analytics", name: "Data Analytics & Operations Research", icon: BarChart3, description: "Business intelligence, Statistics, Optimization" },
-    { id: "supply-chain", name: "Supply Chain Management", icon: Globe, description: "Logistics, Inventory management, Global operations" },
-    { id: "quality-engineering", name: "Quality Engineering", icon: Target, description: "Six Sigma, Statistical process control, Quality systems" },
-    { id: "human-factors", name: "Human Factors Engineering", icon: Users, description: "Ergonomics, User experience, Safety engineering" },
-    { id: "project-management", name: "Project & Systems Management", icon: Cpu, description: "Project planning, Systems engineering, Risk management" }
-  ]
-}
 
 interface ResumeBuilderFeedback {
   candidate_name: string
@@ -104,6 +59,8 @@ export function ResumeBuilderContent({ onBack }: ResumeBuilderContentProps) {
   const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false)
   const [feedback, setFeedback] = useState<ResumeBuilderFeedback | null>(null)
   const [error, setError] = useState<string>("")
+  const [careerFields, setCareerFields] = useState<any[]>([])
+  const [loadingFields, setLoadingFields] = useState<boolean>(false)
 
   const onDrop = useCallback((acceptedFiles: File[], fileRejections: any[]) => {
     setError("")
@@ -132,6 +89,35 @@ export function ResumeBuilderContent({ onBack }: ResumeBuilderContentProps) {
     maxSize: 10 * 1024 * 1024, // 10MB
     multiple: false,
   })
+
+  const getCareerFields = async (major: string) => {
+    setLoadingFields(true)
+    setError("")
+    
+    try {
+      const formData = new FormData()
+      formData.append("major", major.trim())
+
+      const response = await fetch("http://localhost:8081/get-career-fields-for-major", {
+        method: "POST",
+        body: formData,
+      })
+
+      const result = await response.json()
+
+      if (response.ok && result.career_fields) {
+        setCareerFields(result.career_fields)
+        setStep('field')
+      } else {
+        setError(result.message || "Could not get career fields for this major. Please try a different major.")
+      }
+    } catch (err) {
+      console.error("Career fields error:", err)
+      setError("Network error. Please check your connection and try again.")
+    } finally {
+      setLoadingFields(false)
+    }
+  }
 
   const handleAnalyze = async () => {
     if (!selectedFile || !candidateName.trim()) {
@@ -187,6 +173,8 @@ export function ResumeBuilderContent({ onBack }: ResumeBuilderContentProps) {
     setSelectedFile(null)
     setFeedback(null)
     setError("")
+    setCareerFields([])
+    setLoadingFields(false)
   }
 
   if (isAnalyzing) {
@@ -217,65 +205,105 @@ export function ResumeBuilderContent({ onBack }: ResumeBuilderContentProps) {
       <div className="flex-1 p-8">
         {/* Step 1: Major Selection */}
         {step === 'major' && (
-          <div className="max-w-4xl mx-auto space-y-8">
+          <div className="max-w-2xl mx-auto space-y-8">
             <div className="text-center space-y-4">
               <h2 className="text-3xl font-bold bg-gradient-to-r from-emerald-800 via-green-700 to-emerald-700 bg-clip-text text-transparent dark:from-emerald-200 dark:via-green-300 dark:to-emerald-300">
                 What's Your Major?
               </h2>
               <p className="text-lg text-slate-600 dark:text-slate-400">
-                Select your engineering discipline to see relevant career fields
+                Enter your field of study to discover popular career paths
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {Object.keys(ENGINEERING_FIELDS).map((major) => (
-                <Card 
-                  key={major} 
-                  className={`cursor-pointer transition-all duration-300 hover:shadow-lg hover:-translate-y-1 ${
-                    selectedMajor === major 
-                      ? 'ring-2 ring-emerald-500 bg-emerald-50 dark:bg-emerald-950/30' 
-                      : 'hover:border-emerald-300'
-                  }`}
-                  onClick={() => setSelectedMajor(major)}
-                >
-                  <CardHeader className="text-center">
-                    <CardTitle className="text-lg">{major}</CardTitle>
-                  </CardHeader>
-                  <CardContent className="text-center">
-                    <p className="text-sm text-slate-600 dark:text-slate-400">
-                      {ENGINEERING_FIELDS[major as keyof typeof ENGINEERING_FIELDS].length} specialization areas
-                    </p>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+            <Card>
+              <CardContent className="space-y-6 pt-6">
+                <div className="space-y-2">
+                  <Label htmlFor="major">Your Major or Field of Study</Label>
+                  <Input
+                    id="major"
+                    value={selectedMajor}
+                    onChange={(e) => setSelectedMajor(e.target.value)}
+                    placeholder="e.g., Computer Science, Mechanical Engineering, Business, Psychology..."
+                    className="text-lg"
+                  />
+                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                    Enter your current major, degree program, or area of study
+                  </p>
+                </div>
 
-            {selectedMajor && (
-              <div className="text-center">
-                <Button onClick={() => setStep('field')} size="lg" className="bg-emerald-600 hover:bg-emerald-700">
-                  Next: Choose Your Field
-                  <ChevronRight className="ml-2 h-4 w-4" />
+                {error && (
+                  <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>{error}</AlertDescription>
+                  </Alert>
+                )}
+
+                <Button 
+                  onClick={() => getCareerFields(selectedMajor)} 
+                  size="lg" 
+                  className="w-full bg-emerald-600 hover:bg-emerald-700"
+                  disabled={!selectedMajor.trim() || loadingFields}
+                >
+                  {loadingFields ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Finding Career Fields...
+                    </>
+                  ) : (
+                    <>
+                      Discover Career Fields
+                      <ChevronRight className="ml-2 h-4 w-4" />
+                    </>
+                  )}
                 </Button>
-              </div>
-            )}
+
+                {/* Popular Majors Examples */}
+                <div className="mt-6 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
+                  <h4 className="font-medium text-sm text-slate-700 dark:text-slate-300 mb-2">Popular majors include:</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {["Computer Science", "Mechanical Engineering", "Business Administration", "Psychology", "Biology", "Marketing"].map((example) => (
+                      <Button
+                        key={example}
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setSelectedMajor(example)}
+                        className="text-xs"
+                      >
+                        {example}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         )}
 
         {/* Step 2: Field Selection */}
         {step === 'field' && selectedMajor && (
           <div className="max-w-6xl mx-auto space-y-8">
+            <div className="flex items-center justify-between mb-6">
+              <Button 
+                variant="outline" 
+                onClick={() => setStep('major')}
+                className="flex items-center gap-2"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Change Major
+              </Button>
+            </div>
+            
             <div className="text-center space-y-4">
               <h2 className="text-3xl font-bold bg-gradient-to-r from-emerald-800 via-green-700 to-emerald-700 bg-clip-text text-transparent dark:from-emerald-200 dark:via-green-300 dark:to-emerald-300">
-                Choose Your Field of Interest
+                Popular Career Fields for {selectedMajor}
               </h2>
               <p className="text-lg text-slate-600 dark:text-slate-400">
-                Select a specialization within {selectedMajor}
+                Select a career field that interests you
               </p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {ENGINEERING_FIELDS[selectedMajor as keyof typeof ENGINEERING_FIELDS].map((field) => {
-                const IconComponent = field.icon
+              {careerFields.map((field) => {
                 return (
                   <Card 
                     key={field.id} 
@@ -293,13 +321,28 @@ export function ResumeBuilderContent({ onBack }: ResumeBuilderContentProps) {
                     <CardHeader>
                       <div className="flex items-center gap-3">
                         <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-900/50">
-                          <IconComponent className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                          <Target className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
                         </div>
                         <CardTitle className="text-base">{field.name}</CardTitle>
                       </div>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="space-y-3">
                       <p className="text-sm text-slate-600 dark:text-slate-400">{field.description}</p>
+                      <div className="flex flex-wrap gap-1">
+                        {field.key_skills?.slice(0, 3).map((skill: string, index: number) => (
+                          <Badge key={index} variant="secondary" className="text-xs">
+                            {skill}
+                          </Badge>
+                        ))}
+                        {field.key_skills?.length > 3 && (
+                          <Badge variant="secondary" className="text-xs">
+                            +{field.key_skills.length - 3} more
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">
+                        {field.employment_outlook}
+                      </p>
                     </CardContent>
                   </Card>
                 )
