@@ -54,7 +54,7 @@ export function UseCaseSelector({ onSelectUseCase }: UseCaseSelectorProps) {
               
               <CardContent className="space-y-6">
                 <p className="text-slate-700 dark:text-slate-300">
-                  Get personalized guidance to improve your resume based on your field of interest. Perfect for freshmen and students looking to build their professional profile.
+                  Get personalized guidance to improve your resume based on your major and career interests. Perfect for students and new graduates looking to build their professional profile.
                 </p>
 
                 <div className="space-y-3">
@@ -65,15 +65,15 @@ export function UseCaseSelector({ onSelectUseCase }: UseCaseSelectorProps) {
                   <ul className="space-y-2 text-sm text-slate-600 dark:text-slate-400">
                     <li className="flex items-start gap-2">
                       <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-2 shrink-0"></div>
-                      <span>Choose from popular fields (Frontend, Backend, DevOps, Data Science)</span>
+                      <span>Enter your major to discover popular career fields</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-2 shrink-0"></div>
+                      <span>AI-powered career field recommendations based on your major</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-2 shrink-0"></div>
                       <span>Get targeted recommendations for skill development</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-2 shrink-0"></div>
-                      <span>Actionable insights for resume improvement</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-2 shrink-0"></div>

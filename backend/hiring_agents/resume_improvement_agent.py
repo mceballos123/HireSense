@@ -5,9 +5,10 @@ Resume Improvement Agent
 This agent analyzes student resumes and provides educational feedback
 for career development in specific fields.
 """
-#Boilder plate code for the resume improvement agent
-#Will update this to be more specific to the field of intrest
-#How I want it, is I input my major and it gives me some fields
+
+# Boilder plate code for the resume improvement agent
+# Will update this to be more specific to the field of intrest
+# How I want it, is I input my major and it gives me some fields
 import json
 from typing import Dict, List, Optional
 from .llm_client import SimpleLLMAgent
@@ -52,7 +53,7 @@ class ResumeImprovementAgent(SimpleLLMAgent):
                     "REST APIs",
                     "Database Design",
                     "Git",
-                    "Cloud", 
+                    "Cloud",
                 ],
                 "projects": [
                     "REST API service",
@@ -570,6 +571,198 @@ class ResumeImprovementAgent(SimpleLLMAgent):
                 "description": "Lead complex engineering projects and systems development",
             },
         }
+
+    async def get_career_fields_for_major(self, major: str) -> List[Dict]:
+        """
+        Get the most popular career fields for a given major using LLM
+        """
+        print(f"🎯 {self.name}: Getting career fields for major: {major}")
+
+        prompt = self._build_career_fields_prompt(major)
+
+        try:
+            result = await self.query_llm(prompt)
+
+            if result["success"]:
+                career_fields = self.parse_json_response(result["content"])
+                if career_fields and "career_fields" in career_fields:
+                    print(f"✅ {self.name}: Found career fields for {major}")
+                    return career_fields["career_fields"]
+                else:
+                    print(f"❌ {self.name}: Failed to parse career fields response")
+                    return self._get_fallback_career_fields(major)
+            else:
+                print(f"❌ {self.name}: LLM query failed: {result['content']}")
+                return self._get_fallback_career_fields(major)
+
+        except Exception as e:
+            print(f"💥 {self.name}: Error getting career fields: {e}")
+            return self._get_fallback_career_fields(major)
+
+    def _build_career_fields_prompt(self, major: str) -> str:
+        """Build the prompt for getting career fields for a major"""
+        return f"""
+You are a career counselor helping students understand the most popular and in-demand career fields for their major.
+
+MAJOR: {major}
+
+TASK: Provide the top 5-6 most popular and employable career fields that students with a {major} major typically go into. Focus on fields that are currently in high demand and offer good career prospects.
+
+For each career field, include:
+- A clear, descriptive name
+- Key skills/technologies used in that field
+- Brief description of what professionals in that field do
+
+Examples for reference:
+- Computer Science → Frontend Development, Backend Development, Data Science, Machine Learning, DevOps, Software Engineering
+- Mechanical Engineering → Robotics, Automotive Engineering, Aerospace, Manufacturing, HVAC Systems
+- Business → Marketing, Finance, Consulting, Product Management, Operations
+
+Provide your response in this exact JSON format:
+{{
+    "major": "{major}",
+    "career_fields": [
+        {{
+            "id": "unique-field-identifier",
+            "name": "Career Field Name",
+            "description": "Brief description of what this field involves",
+            "key_skills": ["Skill 1", "Skill 2", "Skill 3", "Skill 4", "Skill 5"],
+            "employment_outlook": "Brief note about job market demand"
+        }}
+    ]
+}}
+
+IMPORTANT:
+- Focus on fields with strong employment prospects
+- Make the field names clear and specific
+- Include both technical and business-oriented fields where applicable
+- Consider current market trends and demands
+- Aim for 5-6 career fields total
+"""
+
+    def _get_fallback_career_fields(self, major: str) -> List[Dict]:
+        """Provide fallback career fields when LLM fails"""
+        # Map common majors to career fields
+        fallback_mappings = {
+            "computer science": [
+                {
+                    "id": "frontend",
+                    "name": "Frontend Development",
+                    "description": "Create user interfaces and web applications",
+                    "key_skills": ["React", "JavaScript", "HTML/CSS", "UI/UX"],
+                    "employment_outlook": "High demand with growing opportunities",
+                },
+                {
+                    "id": "backend",
+                    "name": "Backend Development",
+                    "description": "Build server-side applications and APIs",
+                    "key_skills": ["Python", "Node.js", "Databases", "APIs"],
+                    "employment_outlook": "Very high demand across all industries",
+                },
+                {
+                    "id": "data-science",
+                    "name": "Data Science & AI",
+                    "description": "Analyze data and build machine learning models",
+                    "key_skills": ["Python", "Machine Learning", "Statistics", "SQL"],
+                    "employment_outlook": "Extremely high demand and growth",
+                },
+                {
+                    "id": "devops",
+                    "name": "DevOps Engineering",
+                    "description": "Automate deployment and manage infrastructure",
+                    "key_skills": ["Docker", "Kubernetes", "AWS", "CI/CD"],
+                    "employment_outlook": "High demand with excellent salaries",
+                },
+                {
+                    "id": "cybersecurity",
+                    "name": "Cybersecurity",
+                    "description": "Protect systems and data from security threats",
+                    "key_skills": [
+                        "Security",
+                        "Networking",
+                        "Ethical Hacking",
+                        "Compliance",
+                    ],
+                    "employment_outlook": "Critical shortage - excellent opportunities",
+                },
+            ],
+            "mechanical engineering": [
+                {
+                    "id": "robotics",
+                    "name": "Robotics Engineering",
+                    "description": "Design and program robotic systems",
+                    "key_skills": ["ROS", "Python", "Control Systems", "AI"],
+                    "employment_outlook": "Growing field with automation trends",
+                },
+                {
+                    "id": "automotive",
+                    "name": "Automotive Engineering",
+                    "description": "Design vehicles and automotive systems",
+                    "key_skills": [
+                        "CAD",
+                        "Testing",
+                        "Electric Vehicles",
+                        "Autonomous Systems",
+                    ],
+                    "employment_outlook": "Strong demand especially in EV sector",
+                },
+                {
+                    "id": "aerospace",
+                    "name": "Aerospace Engineering",
+                    "description": "Design aircraft and space systems",
+                    "key_skills": ["CAD", "CFD", "Propulsion", "Flight Dynamics"],
+                    "employment_outlook": "Stable demand in aerospace industry",
+                },
+                {
+                    "id": "manufacturing",
+                    "name": "Manufacturing Engineering",
+                    "description": "Optimize production processes",
+                    "key_skills": [
+                        "Lean Manufacturing",
+                        "Quality Control",
+                        "Automation",
+                    ],
+                    "employment_outlook": "Good opportunities in modern manufacturing",
+                },
+            ],
+        }
+
+        # Normalize major name for lookup
+        major_key = major.lower().strip()
+
+        # Check for exact matches or partial matches
+        for key, fields in fallback_mappings.items():
+            if key in major_key or major_key in key:
+                return fields
+
+        # Default fallback for unknown majors
+        return [
+            {
+                "id": "general-tech",
+                "name": "Technology Consulting",
+                "description": "Help organizations implement technology solutions",
+                "key_skills": [
+                    "Problem Solving",
+                    "Communication",
+                    "Project Management",
+                ],
+                "employment_outlook": "Good demand across industries",
+            },
+            {
+                "id": "project-management",
+                "name": "Project Management",
+                "description": "Lead and coordinate complex projects",
+                "key_skills": ["Planning", "Leadership", "Risk Management", "Agile"],
+                "employment_outlook": "Strong demand in all industries",
+            },
+            {
+                "id": "business-analysis",
+                "name": "Business Analysis",
+                "description": "Analyze business processes and requirements",
+                "key_skills": ["Analysis", "Documentation", "Process Improvement"],
+                "employment_outlook": "Steady demand in business sector",
+            },
+        ]
 
     async def analyze_resume_for_improvement(
         self,

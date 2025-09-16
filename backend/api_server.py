@@ -227,9 +227,41 @@ async def evaluate_candidate(
         return {"status": "error", "message": f"Error during evaluation: {str(e)}"}
 
 
+@app.post("/get-career-fields-for-major")
+async def get_career_fields_for_major(
+    major: str = Form(...),
+):
+    """Get recommended career fields for a given major"""
+    print("=" * 60)
+    print("🎯 GET-CAREER-FIELDS-FOR-MAJOR ENDPOINT HIT!")
+    print("=" * 60)
+    try:
+        print(f"📄 Received request for major: {major}")
+
+        # Initialize the resume improvement agent to get field mappings
+        improvement_agent = ResumeImprovementAgent()
+
+        # Get career fields for the major
+        career_fields = await improvement_agent.get_career_fields_for_major(major)
+
+        if career_fields:
+            print(f"✅ Found {len(career_fields)} career fields for {major}")
+            return {"major": major, "career_fields": career_fields}
+        else:
+            return {
+                "major": major,
+                "career_fields": [],
+                "message": "No specific career fields found for this major",
+            }
+
+    except Exception as e:
+        print(f"❌ Error getting career fields: {str(e)}")
+        return {"status": "error", "message": f"Error getting career fields: {str(e)}"}
+
+
 @app.post("/analyze-resume-for-improvement")
 async def analyze_resume_for_improvement(
-    #form data
+    # form data
     candidate_name: str = Form(...),
     field_of_interest: str = Form(...),
     major: str = Form(...),
