@@ -38,10 +38,11 @@ class SimpleLLMAgent:
         }
 
         payload = {
-            "model": "asi1-mini",
+            "model": "asi1-mini", # model
             "messages": [
                 {
                     "role": "system",
+                    # Context
                     "content": "You are a specialized AI agent for hiring analysis. Provide clear, structured responses in valid JSON format.",
                 },
                 {"role": "user", "content": prompt},
@@ -55,6 +56,7 @@ class SimpleLLMAgent:
             print(f"🔗 {self.name}: Querying ASI:One API")
 
             # Create SSL context to bypass certificate verification
+            # SSL is encrption from the server to the client
             ssl_context = ssl.create_default_context()
             ssl_context.check_hostname = False
             ssl_context.verify_mode = ssl.CERT_NONE
