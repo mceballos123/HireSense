@@ -20,7 +20,12 @@ const navItems: NavItem[] = [
 
 export function AppSidebar() {
   const [isExpanded, setIsExpanded] = React.useState(false)
+  const [isMounted, setIsMounted] = React.useState(false)
   const pathname = usePathname()
+
+  React.useEffect(() => {
+    setIsMounted(true)
+  }, [])
 
   const sidebarVariants = {
     expanded: {
@@ -84,7 +89,7 @@ export function AppSidebar() {
                 </AnimatePresence>
               </motion.div>
             </Link>
-            {pathname === item.url && (
+            {isMounted && pathname === item.url && (
               <motion.div
                 layoutId="active-pill"
                 className="absolute inset-0 bg-purple-500/20 border border-purple-500/50 rounded-lg -z-10"

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import React from "react"
 import { 
@@ -119,8 +119,81 @@ const getSortLabel = (sortBy: SortOption) => {
 export function DashboardContent() {
   const [selectedJob, setSelectedJob] = useState<JobPost | null>(null)
   const [sortBy, setSortBy] = useState<SortOption>("score-high")
+  const [dynamicCandidates, setDynamicCandidates] = useState<any[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [useDynamicData, setUseDynamicData] = useState(false)
 
-  const sortedApplicants = [...applicants].sort((a, b) => {
+  // Fetch top candidates from API
+  const fetchTopCandidates = async () => {
+    try {
+      setIsLoading(true)
+      const response = await fetch('http://localhost:8000/top-candidates?limit=20')
+      if (response.ok) {
+        const candidates = await response.json()
+        // Transform backend data to match frontend structure
+        const transformedCandidates = candidates.map((candidate: any) => ({
+          id: candidate.id,
+          name: candidate.candidate_name,
+          position: candidate.position,
+          email: candidate.email || `${(candidate.candidate_name || 'unknown').toLowerCase().replace(' ', '.')}@example.com`,
+          phone: candidate.phone || "555-000-0000",
+          location: candidate.location || "Unknown Location",
+          experience: `${candidate.experience_years || 0}+ years`,
+          experienceYears: candidate.experience_years || 0,
+          experienceLevel: candidate.experience_level || "Unknown",
+          appliedDate: candidate.applied_date ? new Date(candidate.applied_date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+          overallScore: Math.round(candidate.overall_score || 0),
+          decision: candidate.decision || "HIRE",
+          confidence: candidate.confidence || 0,
+          skills: candidate.skills ? (() => {
+            try {
+              return JSON.parse(candidate.skills).map((skill: any) => ({ 
+                name: skill.name || skill, 
+                score: skill.score || 90, 
+                required: skill.required || false 
+              }))
+            } catch {
+              return []
+            }
+          })() : [],
+          summary: candidate.summary || "No summary available",
+          strengths: candidate.strengths ? (() => {
+            try { return JSON.parse(candidate.strengths) } catch { return [] }
+          })() : [],
+          concerns: candidate.concerns ? (() => {
+            try { return JSON.parse(candidate.concerns) } catch { return [] }
+          })() : [],
+          keyFactors: candidate.key_factors ? (() => {
+            try { return JSON.parse(candidate.key_factors) } catch { return [] }
+          })() : [],
+          skillMatches: candidate.skill_matches ? (() => {
+            try { return JSON.parse(candidate.skill_matches) } catch { return [] }
+          })() : [],
+          skillGaps: candidate.skill_gaps ? (() => {
+            try { return JSON.parse(candidate.skill_gaps) } catch { return [] }
+          })() : [],
+          experienceMatch: candidate.experience_match || "Good",
+          analysis: candidate.analysis || "No analysis available"
+        }))
+        setDynamicCandidates(transformedCandidates)
+        setUseDynamicData(true)
+      }
+    } catch (error) {
+      console.error('Failed to fetch top candidates:', error)
+      // Fall back to hardcoded data
+      setUseDynamicData(false)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchTopCandidates()
+  }, [])
+
+  // Use dynamic candidates if available, otherwise fall back to hardcoded
+  const candidatesToShow = useDynamicData ? dynamicCandidates : applicants
+  const sortedApplicants = [...candidatesToShow].sort((a, b) => {
     switch (sortBy) {
       case "score-high":
         return b.overallScore - a.overallScore
@@ -158,9 +231,21 @@ export function DashboardContent() {
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-3xl font-bold text-slate-900 dark:text-white">Top Candidates</h2>
-                <p className="text-slate-600 dark:text-slate-400">AI-ranked applicants for open positions</p>
+                <p className="text-slate-600 dark:text-slate-400">
+                  {useDynamicData ? "Live AI-ranked applicants (85%+ confidence)" : "AI-ranked applicants for open positions"}
+                </p>
               </div>
-              <DropdownMenu>
+              <div className="flex items-center gap-3">
+                <Button
+                  variant={useDynamicData ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setUseDynamicData(!useDynamicData)}
+                  className="gap-2"
+                >
+                  {useDynamicData ? "Live Data" : "Demo Data"}
+                  {useDynamicData && <Sparkles className="h-3 w-3" />}
+                </Button>
+                <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button 
                     variant="ghost"
@@ -189,10 +274,29 @@ export function DashboardContent() {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
+              </div>
             </div>
 
             <div className="space-y-4">
-              {sortedApplicants.map((applicant, index) => (
+              {isLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="flex items-center gap-3 text-slate-500 dark:text-slate-400">
+                    <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                    <span>Loading top candidates...</span>
+                  </div>
+                </div>
+              ) : sortedApplicants.length === 0 && useDynamicData ? (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4">
+                    <Users className="w-8 h-8 text-slate-400" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">No Top Candidates Yet</h3>
+                  <p className="text-slate-500 dark:text-slate-400 max-w-md">
+                    Complete a resume evaluation with 85%+ confidence to see candidates appear here automatically.
+                  </p>
+                </div>
+              ) : (
+                sortedApplicants.map((applicant, index) => (
                 <Card key={applicant.id} className="group relative overflow-hidden border border-slate-200/60 bg-white/90 backdrop-blur-sm shadow-sm hover:shadow-lg hover:border-blue-300/60 transition-all duration-300 hover:-translate-y-0.5 dark:bg-slate-800/90 dark:border-slate-700/60 dark:hover:border-blue-600/60">
                   {/* AI Score indicator */}
                   <div className="absolute top-4 right-4">
@@ -232,7 +336,7 @@ export function DashboardContent() {
 
                       {/* Skills */}
                       <div className="flex items-center gap-2 flex-wrap">
-                        {applicant.skills.slice(0, 4).map((skill) => (
+                        {applicant.skills.slice(0, 4).map((skill: any) => (
                           <Badge key={skill.name} className="bg-slate-100 text-slate-700 border border-slate-200 hover:bg-slate-200 transition-colors dark:bg-slate-700 dark:text-slate-300 dark:border-slate-600">
                             {skill.name}
                           </Badge>
@@ -256,7 +360,8 @@ export function DashboardContent() {
                     </div>
                   </CardContent>
                 </Card>
-              ))}
+                ))
+              )}
             </div>
           </div>
 
@@ -395,8 +500,4 @@ export function DashboardContent() {
     </div>
   )
 }
-
-
-
-
 
