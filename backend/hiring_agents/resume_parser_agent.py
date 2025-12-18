@@ -1,9 +1,3 @@
-"""
-Resume Parser Agent
-==================
-
-This agent parses resumes using ASI:One LLM to extract candidate information.
-"""
 
 from uagents import Agent, Context, Protocol
 # from uagents.setup import fund_agent_if_low  # Disabled to avoid network calls

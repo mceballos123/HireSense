@@ -1,10 +1,3 @@
-"""
-Resume Improvement Agent
-=======================
-
-This agent analyzes student resumes and provides educational feedback
-for career development in specific fields.
-"""
 
 # Boilder plate code for the resume improvement agent
 # Will update this to be more specific to the field of intrest

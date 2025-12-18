@@ -1,9 +1,4 @@
-"""
-Hiring Coordinator Agent
-=======================
 
-This agent coordinates the entire hiring process by managing communication between all other agents.
-"""
 
 import asyncio
 from uagents import Agent, Context, Protocol

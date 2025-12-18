@@ -1,9 +1,3 @@
-"""
-PDF Parser Utility
-==================
-
-Utility for extracting text from PDF files for resume processing.
-"""
 
 import PyPDF2
 import io

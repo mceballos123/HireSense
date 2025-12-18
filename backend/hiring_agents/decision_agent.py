@@ -1,9 +1,3 @@
-"""
-Decision Maker Agent
-===================
-
-This agent makes the final hiring decision based on the debate between pro and anti hire advocates.
-"""
 
 from uagents import Agent, Context, Protocol
 

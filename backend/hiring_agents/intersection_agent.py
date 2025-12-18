@@ -1,9 +1,3 @@
-"""
-Intersection Evaluator Agent
-===========================
-
-This agent evaluates the intersection between job requirements and candidate profile.
-"""
 
 from uagents import Agent, Context, Protocol
 # from uagents.setup import fund_agent_if_low
