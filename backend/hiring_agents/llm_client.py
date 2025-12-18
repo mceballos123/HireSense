@@ -1,9 +1,3 @@
-"""
-LLM Client for uAgents Hiring System
-===================================
-
-This file contains the shared LLM client that all uAgents use to communicate with Google Gemini.
-"""
 
 import aiohttp
 import ssl
@@ -48,7 +42,7 @@ class SimpleLLMAgent:
             ],
             "generationConfig": {
                 "temperature": 0.3,
-                "maxOutputTokens": 1700,
+                "maxOutputTokens": 1800,
             }
         }
 

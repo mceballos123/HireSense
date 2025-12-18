@@ -1,9 +1,3 @@
-"""
-Anti-Hire Advocate Agent
-========================
-
-This agent advocates against hiring candidates by building compelling anti-hire arguments.
-"""
 
 from uagents import Agent, Context, Protocol
 # from uagents.setup import fund_agent_if_low

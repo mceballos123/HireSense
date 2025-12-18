@@ -1,9 +1,3 @@
-"""
-Pro-Hire Advocate Agent
-======================
-
-This agent advocates for hiring candidates by building compelling pro-hire arguments.
-"""
 
 from uagents import Agent, Context, Protocol
 # from uagents.setup import fund_agent_if_low

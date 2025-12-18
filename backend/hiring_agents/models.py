@@ -1,9 +1,3 @@
-"""
-Shared Models for uAgents Hiring System
-======================================
-
-This file contains all the Pydantic models used across the uAgents system.
-"""
 
 from typing import List, Optional
 from pydantic import BaseModel, Field
