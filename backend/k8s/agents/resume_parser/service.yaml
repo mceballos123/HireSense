@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+
+metadata:
+  name: resume-parser-service
+
+spec:
+  type: ClusterIP
+
+  selector:
+    app: resume-parser-agent
+  ports:
+    - port: 80
+      targetPort: 8002

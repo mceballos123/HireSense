@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: decision-agent-deployment
+
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: decision-agent
+  template:
+    metadata:
+      labels:
+        app: decision-agent
+    spec:
+      containers:
+        - name: decision-agent
+          image: decision-agent:latest
+          ports: 
+            - containerPort: 8006
+          env:
+              - name: GEMINI_API_KEY
+                valueFrom:
+                  secretKeyRef:
+                    name: hire-sense-secrets
+                    key: GEMINI_API_KEY
+                
+              - name: GEMINI_URL
+                valueFrom:
+                  configMapKeyRef:
+                    name: hire-sense-config
+                    key: GEMINI_URL
+              
+          
