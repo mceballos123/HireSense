@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+
+metadata:
+  name: anti-hire-service
+
+spec:
+  type: ClusterIP # ip address to access the serive, or ip adress for the service
+  selector: 
+    app: anti-hire-agent #label for the pod to select
+  
+  ports:
+   - port: 80 # Port to expose the service
+     targetPort: 8005 # port the agent is running on
+  

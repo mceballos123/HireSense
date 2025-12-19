@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service # type of service to create
+
+metadata:
+  name: decision-agent-service # Identifier
+
+spec: 
+  type: ClusterIP # ip address to acess the service
+
+  selector:
+    app: decision-agent #label for the agent to select
+  
+  ports:
+   - port: 80
+     targetPort: 8006

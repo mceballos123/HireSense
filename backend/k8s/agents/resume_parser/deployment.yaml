@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: resume-parser-deployment
+
+spec:
+  replicas: 2
+
+  selector: 
+    matchLabels:
+     app: resume-parser-agent
+  
+  template:
+    metadata:
+      labels:
+        app: resume-parser-agent
+        
+    spec:
+      containers:
+       - name: resume-parser-agent
+         image: resume-parser-agent:latest
+         ports:
+           - containerPort: 8002
+         
+         env:
+          - name: GEMINI_API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: hire-sense-secrets
+                key: GEMINI_API_KEY
+          - name: GEMINI_URL
+            valueFrom:
+              configMapKeyRef:
+                name: hire-sense-config
+                key: GEMINI_URL

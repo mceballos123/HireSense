@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: anti-hire-deployment
+
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: anti-hire-agent
+    
+  template:
+      metadata:
+        labels:
+          app: anti-hire-agent
+      spec:
+        containers:
+         - name: anti-hire-agent
+           image: anti-hire-agent:latest
+           ports:
+            - containerPort: 8005
+           env:
+            - name: GEMINI_API_KEY
+              valueFrom: 
+                secretKeyRef:
+                  name: hire-sense-secrets
+                  key: GEMINI_API_KEY
+            - name: GEMINI_URL
+              valueFrom: 
+                configMapKeyRef:
+                  name: hire-sense-config
+                  key: GEMINI_URL
+            
+            - name: SUPABASE_KEY 
+              valueFrom: 
+                secretKeyRef: 
+                  name: hire-sense-secrets
+                  key: SUPABASE_KEY
+            - name: SUPABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: hire-sense-secrets
+                  key: SUPABASE_URL

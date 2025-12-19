@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata: 
+  name: pro-hire-agent-deployment
+
+spec:
+  replicas: 2
+
+  selector: 
+    matchLabels:
+      app: pro-hire-agent
+    
+  template:
+    metadata:
+      labels:
+        app: pro-hire-agent
+    
+    spec:
+        containers:
+        - name: pro-hire-agent
+          image: pro-hire-agent:latest
+          ports: 
+            - containerPort: 8004
+          env: 
+            - name: GEMINI_API_KEY
+              valueFrom: 
+                secretKeyRef:
+                  name: hire-sense-secrets
+                  key: GEMINI_API_KEY
+            
+            - name: GEMINI_URL
+              valueFrom: 
+                configMapKeyRef:
+                  name: hire-sense-config
+                  key: GEMINI_URL
