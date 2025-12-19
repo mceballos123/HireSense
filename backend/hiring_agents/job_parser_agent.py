@@ -12,7 +12,7 @@ from models.models import JobParseRequest, JobParseResponse
 
 # Import from helper-func directory
 sys.path.append(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'helper-func'))
-from llm_client import SimpleLLMAgent
+from backend.helper_func.llm_client import SimpleLLMAgent
 
 
 def create_job_parser_agent(port=8001):
@@ -135,7 +135,6 @@ def create_job_parser_agent(port=8001):
     agent.include(protocol, publish_manifest=True)
 
     return agent
-
 
 # Create default instance for direct use
 job_parser_agent = create_job_parser_agent()

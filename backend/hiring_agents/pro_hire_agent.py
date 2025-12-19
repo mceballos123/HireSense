@@ -11,7 +11,7 @@ from models.models import DebateRequest, DebateResponse
 
 # Import from helper-func directory
 sys.path.append(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'helper-func'))
-from llm_client import SimpleLLMAgent
+from backend.helper_func.llm_client import SimpleLLMAgent
 
 def create_pro_hire_agent(port=8004):
     """Factory function to create a pro-hire advocate agent"""
