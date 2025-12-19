@@ -16,8 +16,8 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 # Import our custom modules
-from hiring_agents.pdf_parser import PDFParser
-from hiring_agents.llm_client import SimpleLLMAgent
+from backend.helper_func.pdf_parser import PDFParser
+from backend.helper_func.llm_client import SimpleLLMAgent
 from db.supabase_client import HiringEvaluationsClient
 
 

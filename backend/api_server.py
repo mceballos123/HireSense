@@ -12,8 +12,7 @@ import asyncio
 import json
 from typing import List
 from main import run_hiring_system
-from hiring_agents.pdf_parser import PDFParser
-from hiring_agents.resume_improvement_agent import ResumeImprovementAgent
+from backend.helper_func.pdf_parser import PDFParser
 import time
 from websockets.exceptions import ConnectionClosedError
 
@@ -225,98 +224,6 @@ async def evaluate_candidate(
             pass  # Don't fail if event emission fails
 
         return {"status": "error", "message": f"Error during evaluation: {str(e)}"}
-
-
-@app.post("/get-career-fields-for-major")
-async def get_career_fields_for_major(
-    major: str = Form(...),
-):
-    """Get recommended career fields for a given major"""
-    print("=" * 60)
-    print("🎯 GET-CAREER-FIELDS-FOR-MAJOR ENDPOINT HIT!")
-    print("=" * 60)
-    try:
-        print(f"📄 Received request for major: {major}")
-
-        # Initialize the resume improvement agent to get field mappings
-        improvement_agent = ResumeImprovementAgent()
-
-        # Get career fields for the major
-        career_fields = await improvement_agent.get_career_fields_for_major(major)
-
-        if career_fields:
-            print(f"✅ Found {len(career_fields)} career fields for {major}")
-            return {"major": major, "career_fields": career_fields}
-        else:
-            return {
-                "major": major,
-                "career_fields": [],
-                "message": "No specific career fields found for this major",
-            }
-
-    except Exception as e:
-        print(f"❌ Error getting career fields: {str(e)}")
-        return {"status": "error", "message": f"Error getting career fields: {str(e)}"}
-
-
-@app.post("/analyze-resume-for-improvement")
-async def analyze_resume_for_improvement(
-    # form data
-    candidate_name: str = Form(...),
-    field_of_interest: str = Form(...),
-    major: str = Form(...),
-    resume_file: UploadFile = File(...),
-):
-    """Analyze a student's resume and provide improvement recommendations (Use Case 1)"""
-    print("=" * 60)
-    print("🎓 ANALYZE-RESUME-FOR-IMPROVEMENT ENDPOINT HIT!")
-    print("=" * 60)
-    try:
-        print(f"📄 Received request for student: {candidate_name}")
-        print(f"📄 Field of interest: {field_of_interest}")
-        print(f"📄 Major: {major}")
-        print(f"📄 Parsing PDF file: {resume_file.filename}")
-
-        # Parse the uploaded PDF
-        resume_content = PDFParser.extract_text_from_pdf(await resume_file.read())
-
-        if not resume_content or len(resume_content.strip()) < 10:
-            raise HTTPException(
-                status_code=400,
-                detail="Could not extract text from PDF or file is too short",
-            )
-
-        print(f"📄 Successfully extracted {len(resume_content)} characters from PDF")
-
-        # Initialize the resume improvement agent
-        improvement_agent = ResumeImprovementAgent()
-
-        print("🎓 Starting resume improvement analysis...")
-
-        # Analyze the resume for educational feedback
-        result = await improvement_agent.analyze_resume_for_improvement(
-            resume_content=resume_content,
-            candidate_name=candidate_name,
-            field_of_interest=field_of_interest,
-            major=major,
-        )
-
-        if result:
-            print("✅ Resume improvement analysis completed successfully")
-            return result
-        else:
-            return {
-                "status": "error",
-                "message": "Failed to complete resume analysis",
-            }
-
-    except HTTPException:
-        # Re-raise HTTP exceptions
-        raise
-    except Exception as e:
-        print(f"❌ Error in resume improvement analysis: {str(e)}")
-        return {"status": "error", "message": f"Error during analysis: {str(e)}"}
-
 
 if __name__ == "__main__":
     import uvicorn
