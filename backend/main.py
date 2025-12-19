@@ -7,7 +7,12 @@ Coordinates all agents and provides the entry point.
 """
 
 import asyncio
+import sys
+import os
 from uagents import Agent, Context, Protocol
+
+# Add parent directory to path for imports
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 # from uagents.setup import fund_agent_if_low
 from hiring_agents import (
@@ -18,7 +23,7 @@ from hiring_agents import (
     AntiHireAgent,
     DecisionAgent,
 )
-from hiring_agents.models import (
+from models.models import (
     JobParseRequest,
     ResumeParseRequest,
     IntersectionRequest,
@@ -437,29 +442,3 @@ if __name__ == "__main__":
     print("📡 To test the hiring system, use the API server at http://localhost:8080")
     print("🚀 Start the API server with: python api_server.py")
 
-    # Uncomment below for standalone testing with dummy data:
-
-    # # Test data
-    # resume_content = """
-    # Software Engineer with 3 years of experience in web development.
-    # Proficient in Python, JavaScript, React, and Node.js.
-    # Experience with MongoDB and AWS services.
-    # Led development of multiple production applications.
-    # Strong problem-solving skills and experience with agile methodologies.
-    # """
-    #
-    # job_description = """
-    # Mid-level Software Engineer position.
-    # Required skills: Python, JavaScript, React.
-    # Preferred skills: Node.js, MongoDB, AWS.
-    # Experience with microservices and cloud deployment preferred.
-    # Looking for someone with 2-5 years of experience.
-    # """
-    #
-    # # Run the hiring system
-    # asyncio.run(run_hiring_system(
-    #     resume_content=resume_content,
-    #     job_description=job_description,
-    #     candidate_name="John Doe",
-    #     job_title="Software Engineer"
-    # ))

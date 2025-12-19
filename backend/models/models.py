@@ -1,6 +1,7 @@
 
 from typing import List, Optional
 from pydantic import BaseModel, Field
+from uagents import Model
 
 
 # Job-related models
@@ -47,14 +48,14 @@ class IntersectionResponse(BaseModel):
     experience_match: str
 
 
-# Debate models
-class DebateRequest(BaseModel):
+# Debate models - Use uagents.Model for inter-agent communication
+class DebateRequest(Model):
     intersection_analysis: IntersectionResponse
     round_number: int
     previous_argument: str = ""
 
 
-class DebateResponse(BaseModel):
+class DebateResponse(Model):
     position: str  # "pro" or "anti"
     argument: str
     confidence: float
