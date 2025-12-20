@@ -336,21 +336,4 @@ coordinator_agent = create_coordinator_agent()
 
 
 if __name__ == "__main__":
-    print("""
-🤖 Starting Hiring Coordinator Agent...
-
-This agent will:
-1. Orchestrate the entire hiring evaluation process
-2. Coordinate communication between all agents:
-   - Job Parser
-   - Resume Parser
-   - Intersection Evaluator
-   - Pro-Hire Advocate
-   - Anti-Hire Advocate
-   - Decision Maker
-3. Track process state and handle failures
-4. Emit real-time updates via WebSocket (if configured)
-
-🛑 Stop with Ctrl+C
-    """)
     coordinator_agent.run()

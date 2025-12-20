@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agent-server-deployment
+
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: agent-server
+  
+  template:
+    metadata:
+      labels:
+        app: agent-server
+    spec:
+      containers:
+       - name: agent-server
+         image: agent-server:latest
+         ports: 
+          - containerPort: 8081
