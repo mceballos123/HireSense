@@ -435,10 +435,3 @@ async def run_hiring_system(
         print("✅ Agent cleanup completed (non-blocking)")
 
 
-# Test data and main execution
-if __name__ == "__main__":
-    # Only run test data if explicitly requested (commented out for production)
-    print("🔧 main.py is now configured to work with the API server.")
-    print("📡 To test the hiring system, use the API server at http://localhost:8080")
-    print("🚀 Start the API server with: python api_server.py")
-
