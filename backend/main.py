@@ -433,5 +433,3 @@ async def run_hiring_system(
             pass
 
         print("✅ Agent cleanup completed (non-blocking)")
-
-
