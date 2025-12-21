@@ -39,3 +39,4 @@ spec:
       - name: supabase-volume
         persistentVolumeClaim: 
           claimName: supabase-pvc
+          
