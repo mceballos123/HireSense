@@ -12,7 +12,7 @@ import asyncio
 import json
 from typing import List
 from main import run_hiring_system
-from backend.helper_func.pdf_parser import PDFParser
+from helper_func.pdf_parser import PDFParser
 import time
 from websockets.exceptions import ConnectionClosedError
 

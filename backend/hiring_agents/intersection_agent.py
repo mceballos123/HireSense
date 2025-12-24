@@ -11,7 +11,7 @@ from models.models import IntersectionRequest, IntersectionResponse
 
 # Import from helper-func directory
 sys.path.append(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'helper-func'))
-from backend.helper_func.llm_client import SimpleLLMAgent
+from helper_func.llm_client import SimpleLLMAgent
 
 
 def create_intersection_agent(port=8003):

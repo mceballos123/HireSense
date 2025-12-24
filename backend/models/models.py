@@ -1,6 +1,6 @@
 
 from typing import List, Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from uagents import Model
 
 
@@ -49,17 +49,23 @@ class IntersectionResponse(BaseModel):
 
 
 # Debate models - Use uagents.Model for inter-agent communication
-class DebateRequest(Model):
+class DebateRequest(BaseModel):
     intersection_analysis: IntersectionResponse
     round_number: int
     previous_argument: str = ""
 
+    class Config:
+        arbitrary_types_allowed = True
 
-class DebateResponse(Model):
+
+class DebateResponse(BaseModel):
     position: str  # "pro" or "anti"
     argument: str
     confidence: float
     key_points: List[str]
+
+    class Config:
+        arbitrary_types_allowed = True
 
 
 # Decision models
