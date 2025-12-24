@@ -12,7 +12,8 @@ from models.models import JobParseRequest, JobParseResponse
 
 # Import from helper-func directory
 sys.path.append(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'helper-func'))
-from backend.helper_func.llm_client import SimpleLLMAgent
+
+from helper_func.llm_client import SimpleLLMAgent
 
 
 def create_job_parser_agent(port=8001):
@@ -141,15 +142,4 @@ job_parser_agent = create_job_parser_agent()
 
 
 if __name__ == "__main__":
-    print("""
-🤖 Starting Job Parser Agent...
-
-This agent will:
-1. Listen for job parsing requests from the coordinator
-2. Analyze job descriptions using LLM
-3. Extract required/preferred skills, experience level, and key requirements
-4. Return structured job analysis
-
-🛑 Stop with Ctrl+C
-    """)
     job_parser_agent.run()

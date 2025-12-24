@@ -1,25 +1,15 @@
-"""
-Supabase Client for Hiring Evaluations
-======================================
-
-This module provides a client to interact with the resumes and hiring_evaluations tables in Supabase.
-"""
 
 import os
 import json
 from typing import Dict, List, Optional, Any
 from supabase import create_client, Client
 from datetime import datetime
+from dotenv import load_dotenv
 
+load_dotenv()
 
-SUPABASE_URL=os.getenv("SUPABASE_URL")
+SUPABASE_URL=os.getenv("SUPABASE_URL") 
 SUPABASE_KEY=os.getenv("SUPABASE_KEY")
-# For testing purposes
-
-
-
-print(SUPABASE_URL, SUPABASE_KEY)
-
 
 class HiringEvaluationsClient:
     """Client for managing resumes and hiring evaluations in Supabase"""
@@ -55,22 +45,7 @@ class HiringEvaluationsClient:
         key_achievements: Optional[List[str]] = None,
         analysis_summary: Optional[str] = None,
     ) -> Dict[str, Any]:
-        """
-        Create a new resume record
-
-        Args:
-            candidate_name: Name of the candidate
-            resume_text: Full text content of the resume
-            original_filename: Original filename of the uploaded file
-            skills: List of technical skills
-            experience_years: Years of experience
-            experience_level: Experience level (Junior, Mid-level, Senior)
-            key_achievements: List of key achievements
-            analysis_summary: Summary of the resume analysis
-
-        Returns:
-            Dictionary containing the created resume record
-        """
+        
         data = {
             "candidate_name": candidate_name,
             "resume_text": resume_text,
@@ -116,15 +91,7 @@ class HiringEvaluationsClient:
     async def get_resumes_by_candidate(
         self, candidate_name: str
     ) -> List[Dict[str, Any]]:
-        """
-        Get all resumes for a specific candidate
-
-        Args:
-            candidate_name: Name of the candidate
-
-        Returns:
-            List of resume records
-        """
+       
         response = (
             self.client.table("resumes")
             .select("*")
@@ -140,18 +107,7 @@ class HiringEvaluationsClient:
         min_years: Optional[int] = None,
         limit: int = 50,
     ) -> List[Dict[str, Any]]:
-        """
-        Search resumes by criteria
-
-        Args:
-            skills: List of required skills
-            experience_level: Required experience level
-            min_years: Minimum years of experience
-            limit: Maximum number of results
-
-        Returns:
-            List of matching resume records
-        """
+        
         query = self.client.table("resumes").select("*")
 
         if experience_level:
@@ -189,15 +145,7 @@ class HiringEvaluationsClient:
         return results
 
     async def get_recent_resumes(self, limit: int = 10) -> List[Dict[str, Any]]:
-        """
-        Get the most recently uploaded resumes
-
-        Args:
-            limit: Maximum number of records to return
-
-        Returns:
-            List of recent resume records
-        """
+       
         response = (
             self.client.table("resumes")
             .select("*")
@@ -225,27 +173,7 @@ class HiringEvaluationsClient:
         decision_confidence: Optional[float] = None,
         decision_reasoning: Optional[str] = None,
     ) -> Dict[str, Any]:
-        """
-        Create a new hiring evaluation record
-
-        Args:
-            resume_id: UUID of the resume being evaluated (optional for partial records)
-            candidate_name: Name of the candidate
-            job_title: Title of the job position
-            resume_summary: Summary of the resume analysis
-            resume_text: Full text content of the resume
-            job_summary: Summary of the job requirements analysis
-            intersection_score: Compatibility score (0.0 to 1.0)
-            intersection_notes: Notes about the intersection analysis
-            pro_arguments: List of pro-hire arguments
-            anti_arguments: List of anti-hire arguments
-            final_decision: Final decision ('HIRE' or 'REJECT')
-            decision_confidence: Confidence in the decision (0.0 to 1.0)
-            decision_reasoning: Reasoning for the final decision
-
-        Returns:
-            Dictionary containing the created record
-        """
+        
         data = {
             "resume_id": resume_id,
             "candidate_name": candidate_name,
@@ -273,15 +201,7 @@ class HiringEvaluationsClient:
             raise Exception("Failed to create evaluation record")
 
     async def get_evaluation(self, evaluation_id: str) -> Optional[Dict[str, Any]]:
-        """
-        Get a hiring evaluation by ID
-
-        Args:
-            evaluation_id: UUID of the evaluation
-
-        Returns:
-            Dictionary containing the evaluation record or None if not found
-        """
+        
         response = (
             self.client.table("hiring_evaluations")
             .select("*")
@@ -296,15 +216,7 @@ class HiringEvaluationsClient:
     async def get_evaluations_by_candidate(
         self, candidate_name: str
     ) -> List[Dict[str, Any]]:
-        """
-        Get all evaluations for a specific candidate
 
-        Args:
-            candidate_name: Name of the candidate
-
-        Returns:
-            List of evaluation records
-        """
         response = (
             self.client.table("hiring_evaluations")
             .select("*")
@@ -332,15 +244,7 @@ class HiringEvaluationsClient:
         return response.data or []
 
     async def get_evaluations_by_decision(self, decision: str) -> List[Dict[str, Any]]:
-        """
-        Get all evaluations with a specific decision
-
-        Args:
-            decision: Decision to filter by ('HIRE' or 'REJECT')
-
-        Returns:
-            List of evaluation records
-        """
+       
         response = (
             self.client.table("hiring_evaluations")
             .select("*")
@@ -350,15 +254,7 @@ class HiringEvaluationsClient:
         return response.data or []
 
     async def get_recent_evaluations(self, limit: int = 10) -> List[Dict[str, Any]]:
-        """
-        Get the most recent evaluations
-
-        Args:
-            limit: Maximum number of records to return
-
-        Returns:
-            List of recent evaluation records
-        """
+        
         response = (
             self.client.table("hiring_evaluations")
             .select("*")
@@ -807,6 +703,3 @@ if __name__ == "__main__":
         # Delete a job posting
         deleted = await client.delete_job_posting(job_id="...")
         print(f"Job posting deleted: {deleted}")
-
-    # Uncomment to test
-    # asyncio.run(test_client())

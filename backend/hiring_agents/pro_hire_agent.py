@@ -11,7 +11,7 @@ from models.models import DebateRequest, DebateResponse
 
 # Import from helper-func directory
 sys.path.append(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'helper-func'))
-from backend.helper_func.llm_client import SimpleLLMAgent
+from helper_func.llm_client import SimpleLLMAgent
 
 def create_pro_hire_agent(port=8004):
     """Factory function to create a pro-hire advocate agent"""
@@ -129,14 +129,4 @@ pro_hire_agent = create_pro_hire_agent()
 
 
 if __name__ == "__main__":
-    print("""
-🤖 Starting Pro-Hire Advocate Agent...
-
-This agent will:
-1. Listen for debate requests from the coordinator
-2. Build compelling pro-hire arguments based on candidate analysis
-3. Respond with structured arguments including confidence and key points
-
-🛑 Stop with Ctrl+C
-    """)
     pro_hire_agent.run()

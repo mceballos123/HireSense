@@ -15,14 +15,14 @@ from uagents import Agent, Context, Protocol
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 # from uagents.setup import fund_agent_if_low
-from hiring_agents import (
-    JobParserAgent,
-    ResumeParserAgent,
-    IntersectionAgent,
-    ProHireAgent,
-    AntiHireAgent,
-    DecisionAgent,
-)
+from hiring_agents.job_parser_agent import create_job_parser_agent
+from hiring_agents.resume_parser_agent import create_resume_parser_agent
+from hiring_agents.intersection_agent import create_intersection_agent
+from hiring_agents.pro_hire_agent import create_pro_hire_agent
+from hiring_agents.anti_hire_agent import create_anti_hire_agent
+from hiring_agents.decision_agent import create_decision_agent
+
+
 from models.models import (
     JobParseRequest,
     ResumeParseRequest,
@@ -301,12 +301,12 @@ async def run_hiring_system(
     base_port = random.randint(9000, 9500)
 
     # Create all agents with dynamic ports
-    job_parser = JobParserAgent(base_port + 1)
-    resume_parser = ResumeParserAgent(base_port + 2)
-    intersection_evaluator = IntersectionAgent(base_port + 3)
-    pro_hire = ProHireAgent(base_port + 4)
-    anti_hire = AntiHireAgent(base_port + 5)
-    decision_maker = DecisionAgent(base_port + 6)
+    job_parser = create_job_parser_agent(base_port + 1)
+    resume_parser = create_resume_parser_agent(base_port + 2)
+    intersection_evaluator = create_intersection_agent(base_port + 3)
+    pro_hire = create_pro_hire_agent(base_port + 4)
+    anti_hire = create_anti_hire_agent(base_port + 5)
+    decision_maker = create_decision_agent(base_port + 6)
     coordinator = HiringCoordinator(event_emitter, base_port + 7)
 
     # Start all agents in background tasks

@@ -12,7 +12,7 @@ from db.supabase_client import HiringEvaluationsClient
 
 # Import from helper-func directory
 sys.path.append(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'helper-func'))
-from backend.helper_func.llm_client import SimpleLLMAgent
+from helper_func.llm_client import SimpleLLMAgent
 
 
 def create_decision_agent(port=8006):

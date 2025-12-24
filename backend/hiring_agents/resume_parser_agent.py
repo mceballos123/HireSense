@@ -11,7 +11,7 @@ from models.models import ResumeParseRequest, ResumeParseResponse
 
 # Import from helper-func directory
 sys.path.append(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'helper-func'))
-from backend.helper_func.llm_client import SimpleLLMAgent
+from helper_func.llm_client import SimpleLLMAgent
 
 
 def create_resume_parser_agent(port=8002):
@@ -149,15 +149,4 @@ resume_parser_agent = create_resume_parser_agent()
 
 
 if __name__ == "__main__":
-    print("""
-🤖 Starting Resume Parser Agent...
-
-This agent will:
-1. Listen for resume parsing requests from the coordinator
-2. Analyze resume content using LLM
-3. Extract technical skills, experience level, and achievements
-4. Return structured resume analysis
-
-🛑 Stop with Ctrl+C
-    """)
     resume_parser_agent.run()
