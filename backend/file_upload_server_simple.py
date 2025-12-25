@@ -1,10 +1,3 @@
-"""
-Simple File Upload Server - Works with existing hiring_evaluations table
-========================================================================
-
-This version stores PDF parsing results directly into the hiring_evaluations table
-that your friend already set up, leaving hiring-specific fields NULL until later.
-"""
 
 import asyncio
 import uuid
@@ -16,8 +9,8 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 # Import our custom modules
-from backend.helper_func.pdf_parser import PDFParser
-from backend.helper_func.llm_client import SimpleLLMAgent
+from helper_func.pdf_parser import PDFParser
+from helper_func.llm_client import SimpleLLMAgent
 from db.supabase_client import HiringEvaluationsClient
 
 
@@ -41,17 +34,7 @@ async def upload_resume(
     candidate_name: str = Form(...),
     job_title: str = Form(default="To Be Determined")  # Default job title
 ):
-    """
-    Upload and process a resume file, storing results in hiring_evaluations table.
     
-    Args:
-        file: The uploaded resume file (PDF)
-        candidate_name: Name of the candidate
-        job_title: Job title (optional, defaults to "To Be Determined")
-        
-    Returns:
-        JSON response with evaluation_id and parsed data
-    """
     try:
         # Validate file type
         print(f"📤 Processing resume for {candidate_name}")

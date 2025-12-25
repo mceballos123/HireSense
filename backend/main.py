@@ -1,10 +1,3 @@
-"""
-Main Hiring System
-=================
-
-Main execution file for the uAgents hiring system.
-Coordinates all agents and provides the entry point.
-"""
 
 import asyncio
 import sys
