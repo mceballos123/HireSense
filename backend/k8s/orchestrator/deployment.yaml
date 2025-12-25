@@ -30,6 +30,6 @@ spec:
 
           - name: GEMINI_URL
             valueFrom:
-              secretKeyRef:
-                name: hire-sense-secrets
+              configMapKeyRef:
+                name: hire-sense-config
                 key: GEMINI_URL
