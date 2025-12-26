@@ -17,7 +17,7 @@ spec:
     spec:
       containers: 
        - name: api
-         image: api:latest
+         image: gcr.io/gen-lang-client-0189309103/api:v1
          ports:
           - containerPort: 8000
 

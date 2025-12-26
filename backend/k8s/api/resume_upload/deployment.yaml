@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
        - name: resume-upload-api
-         image: resume-upload-api:latest
+         image: gcr.io/gen-lang-client-0189309103/resume-upload-api:v1
          ports:
           - containerPort: 8080
 

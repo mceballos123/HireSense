@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
        - name: resume-parser-agent
-         image: resume-parser-agent:latest
+         image: gcr.io/gen-lang-client-0189309103/resume-parser-agent:v1
          ports:
            - containerPort: 8002
          

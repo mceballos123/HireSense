@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: decision-agent
-          image: decision-agent:latest
+          image: gcr.io/gen-lang-client-0189309103/decision-agent:v1
           ports: 
             - containerPort: 8006
           env:

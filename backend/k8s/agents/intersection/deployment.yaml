@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
       - name: intersection-agent
-        image: intersection-agent:latest
+        image: gcr.io/gen-lang-client-0189309103/intersection-agent:v1
         ports:
           - containerPort: 8003
         env:
