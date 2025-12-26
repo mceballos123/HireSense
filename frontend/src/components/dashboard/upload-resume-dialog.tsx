@@ -85,12 +85,11 @@ export function UploadResumeDialog({
 
     try {
       const formData = new FormData()
-      formData.append("resume_file", selectedFile)
+      formData.append("file", selectedFile)
       formData.append("candidate_name", candidateName.trim())
       formData.append("job_title", job.title)
-      formData.append("job_description", job.description || job.summary)
 
-      const response = await fetch("http://localhost:8081/evaluate-candidate", {
+      const response = await fetch("http://localhost:8080/upload-resume", {
         method: "POST",
         body: formData,
       })
