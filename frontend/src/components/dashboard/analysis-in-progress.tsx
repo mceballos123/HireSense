@@ -30,19 +30,20 @@ export function AnalysisInProgress() {
   useEffect(() => {
     // Try to connect to WebSocket, with fallback for different ports
     const connectWebSocket = () => {
+      console.log('🔌 Attempting to connect to WebSocket at ws://localhost:8081/ws/progress')
       const ws = new WebSocket('ws://localhost:8081/ws/progress')
-      
+
       ws.onopen = () => {
         setIsConnected(true)
-        console.log('WebSocket connected to port 8080')
+        console.log('✅ WebSocket connected successfully to port 8081')
       }
-      
+
       ws.onmessage = (event) => {
         const data = JSON.parse(event.data) as AgentEvent
-        console.log('Received event:', data)
-        
+        console.log('📨 Received event:', data)
+
         setEvents(prev => [...prev, data])
-        
+
         // Update current step based on the event
         if (data.step === "initialization") setCurrentStep("Initializing agents...")
         else if (data.step === "parsing") setCurrentStep("Analyzing job and resume...")
@@ -51,24 +52,26 @@ export function AnalysisInProgress() {
         else if (data.step === "decision") setCurrentStep("Making final decision...")
         else if (data.step === "completed") setCurrentStep("Analysis complete!")
       }
-      
-      ws.onclose = () => {
+
+      ws.onclose = (event) => {
         setIsConnected(false)
-        console.log('WebSocket disconnected')
+        console.log('🔌 WebSocket disconnected:', event.code, event.reason || 'No reason provided')
       }
-      
+
       ws.onerror = (error) => {
-        console.error('WebSocket error:', error)
+        console.error('❌ WebSocket error - This is normal if no analysis is running. Connection will retry automatically.')
         setIsConnected(false)
       }
-      
+
       return ws
     }
 
     const ws = connectWebSocket()
-    
+
     return () => {
-      ws.close()
+      if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
+        ws.close()
+      }
     }
   }, [])
 

@@ -2,7 +2,11 @@
 import asyncio
 import sys
 import os
+import logging
 from uagents import Agent, Context, Protocol
+
+# Suppress uAgents network errors (we run in local mode)
+logging.getLogger("uagents.network").setLevel(logging.CRITICAL)
 
 # Add parent directory to path for imports
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))

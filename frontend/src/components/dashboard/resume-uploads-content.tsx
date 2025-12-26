@@ -12,7 +12,6 @@ import { UploadResumeDialog } from "./upload-resume-dialog"
 import { AnalysisInProgress } from "./analysis-in-progress"
 import { RadialProgress } from "@/components/ui/radial-progress"
 import { UseCaseSelector } from "./use-case-selector"
-import { ResumeBuilderContent } from "./resume-builder-content"
 
 interface DatabaseJobPost {
   id: string
@@ -189,10 +188,7 @@ export function ResumeUploadsContent() {
     return <UseCaseSelector onSelectUseCase={handleUseCaseSelection} />
   }
 
-  // Show Use Case 1: Resume Builder
-  if (currentView === 'use-case-1') {
-    return <ResumeBuilderContent onBack={handleBackToSelector} />
-  }
+  
 
   // Show Use Case 2: Hiring Evaluator (existing functionality)
   return (
