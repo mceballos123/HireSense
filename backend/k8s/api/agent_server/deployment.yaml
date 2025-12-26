@@ -16,6 +16,6 @@ spec:
     spec:
       containers:
        - name: agent-server
-         image: agent-server:latest
+         image: gcr.io/gen-lang-client-0189309103/agent-server:v1
          ports: 
           - containerPort: 8081

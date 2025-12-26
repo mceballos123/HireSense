@@ -18,7 +18,7 @@ spec:
       spec: 
         containers:
          - name: job-parse-agent
-           image: job-parse-agent:latest
+           image: gcr.io/gen-lang-client-0189309103/job-parse-agent:v1
            ports:
             - containerPort: 8001
            env:

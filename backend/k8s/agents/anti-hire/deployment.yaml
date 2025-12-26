@@ -17,7 +17,7 @@ spec:
       spec:
         containers:
          - name: anti-hire-agent
-           image: anti-hire-agent:latest
+           image: gcr.io/gen-lang-client-0189309103/anti-hire-agent:v1
            ports:
             - containerPort: 8005
            env:

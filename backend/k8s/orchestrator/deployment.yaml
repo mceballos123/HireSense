@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
        - name: orchestrator
-         image: orchestrator:latest
+         image: gcr.io/gen-lang-client-0189309103/orchestrator:v1
          ports:
           - containerPort: 8007
           
