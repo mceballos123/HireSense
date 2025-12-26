@@ -4,11 +4,10 @@ metadata:
   name: agent-server-service
 
 spec:
-  type: NodePort
+  type: LoadBalancer
 
   selector:
     app: agent-server
   ports:
     - port: 8081
       targetPort: 8081
-      nodePort: 30081
