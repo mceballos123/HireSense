@@ -152,3 +152,15 @@ secrets.json
 .uagents/
 agent_data/
 logs/ 
+
+# Terraform specific
+terraform.tfstate
+terraform.tfstate.backup
+terraform.tfvars
+terraform.tfvars.backup
+terraform.tfvars.backup.backup
+terraform.tfvars.backup.backup.backup
+terraform.tfvars.backup.backup.backup.backup
+terraform.tfvars.backup.backup.backup.backup.backup 
+.terraform.lock.hcl 
+.terraform/
